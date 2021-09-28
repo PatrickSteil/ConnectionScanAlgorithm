@@ -5,4 +5,4 @@ Programmierpraktikum bei Herrn Prof Schulz
 ## Inhalt
 
 - GTFS Parser
-- CSA Algorithmus
+- CSA Algorithmus (https://i11www.iti.kit.edu/extra/publications/dpsw-isftr-13.pdf)
