@@ -1,6 +1,6 @@
 route_id,route_short_name,route_type,route_url,agency_id,route_desc,route_color,route_text_color,route_long_name
 21,21,0,,19,Bismarckplatz - Hans-Thoma-Platz,E30613,FFFFFF,Neuenheim Technologiepark - Handschuhsheim Hans-Thoma-Platz
-22,22,0,,19,Bismarckplatz - Eppelheim,FDC300,000000,Eppelheim, Kirchheimer Straße - Heidelberg, Bismarckplatz
+22,22,0,,19,Bismarckplatz - Eppelheim,FDC300,000000,Eppelheim Kirchheimer Straße - Heidelberg Bismarckplatz
 23,23,0,,19,Handschuhsheim - Leimen,E48F00,000000,HD Handschuhsheim - HD Bismarckplatz - HD Rohrbach - Leimen
 24,24,0,,19,Handschuhsheim - Rohrbach Süd,8D2176,FFFFFF,Rohrbach Süd - HD Hbf - Technologiepark - HD Handschuhsheim - Dossenheim - Schriesheim
 26,26,0,,19,Bismarckplatz - Kirchheim,F39B9B,000000,HD Bismarckplatz - Messplatz - Kirchheim

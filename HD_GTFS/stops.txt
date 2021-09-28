@@ -12,14 +12,11 @@ stop_id,stop_name,stop_lat,stop_lon,location_type,platform_code
 113222,Biethsstraße,49.4306781,8.6825139,0,n/a
 113301,Burgstraße,49.4343531,8.6822531,0,A
 113302,Burgstraße,49.4349719,8.68202,0,B
-113412,Jellinekstrasse,49.3615211,8.7052769,0,n/a
 113521,Kapellenweg,49.4247311,8.6870769,0,n/a
 113522,Kapellenweg,49.4250519,8.6863669,0,n/a
 113601,Hans-Thoma-Platz,49.4274239,8.6829811,0,A
 113602,Hans-Thoma-Platz,49.4279911,8.6833039,0,B
 113603,Hans-Thoma-Platz,49.4268811,8.6830711,0,C
-113613,Hans-Thoma-Platz,49.4279789,8.6841669,0,n/a
-113614,Hans-Thoma-Platz,49.42816,8.6826569,0,n/a
 114121,HD Bergfriedhof,49.3954419,8.689925,0,n/a
 114122,HD Bergfriedhof,49.3956531,8.6898531,0,n/a
 114321,Bethanienkrankenhaus,49.392595,8.6902211,0,n/a
