@@ -34,6 +34,9 @@ public:
 		for (std::vector<Connection>::iterator i = this->connections.begin(); i != this->connections.end(); ++i)
 			std::cout << (*i) << '\n';
 	}
+
+	// TODO
+	void csa(unsigned int time, unsigned int from_id, unsigned int to_id);
 };
 
 #endif
