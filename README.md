@@ -11,9 +11,7 @@ Programmierpraktikum bei Herrn Prof Schulz
 
 ## TO DO
 
-- GTFS auf Korrektheit prüfen (Uhrzeiten, Anzeigen, Stationen, ...)
-- Parser
-- CSA
+GTFS Footpath sind nicht vorhanden (normalerweise existiert eine transfers.txt Datei).
 
 ## GTFS Cleanup
 

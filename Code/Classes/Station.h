@@ -1,11 +1,10 @@
-#ifndef STATION_h
-#define STATION_h
+#ifndef STAT_h
+#define STAT_h
 
 #include <string>
 #include <vector>
 #include <sstream>
 #include <iostream>
-#include <regex>
 
 class Station
 {
@@ -53,8 +52,10 @@ public:
 		return this->stop_name;
 	}
 
-	void pprint() {
-		std::cout << this->stop_id << " " << this->stop_name << "\n" << this->stop_lat << ", " << this->stop_lon << "\n" << this->location_type << " " << this->platform_code << std::endl;
+
+	friend std::ostream& operator<< (std::ostream& os, const Station& station) {
+		os << station.stop_id << " " << station.stop_name; //<< "\n" << station->stop_lat << ", " << station->stop_lon << "\n" << station->location_type << " " << station->platform_code;
+		return os;
 	}
 };
 
