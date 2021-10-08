@@ -10,6 +10,13 @@ private:
 	std::string trip_id;
 
 public:
+	Connection() {
+		this->dep_id = (~0);
+		this->arr_id = (~0);
+		this->dep_time = (~0);
+		this->arr_time = (~0);
+		this->trip_id = "";
+	};
 	Connection(unsigned int dep_id, unsigned int arr_id, unsigned int dep_time, unsigned int arr_time, std::string trip_id = "") {
 		this->dep_id = dep_id;
 		this->arr_id = arr_id;

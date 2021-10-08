@@ -11,16 +11,19 @@ Programmierpraktikum bei Herrn Prof Schulz
 
 ## TO DO
 
-GTFS Footpath sind nicht vorhanden (normalerweise existiert eine transfers.txt Datei).
+- GTFS Footpath sind nicht vorhanden (normalerweise existiert eine transfers.txt Datei). Vllt Sweepline Algorithmus um per Luftlinie und Geh Geschwindigkeit die Zeit zu bekommen ? Aber muss "transitively closed" sein!
+- Trip Flags - und verstehen wie weshalb warum
 
-## GTFS Cleanup
+## Notizen
 
-Ich habe das Original GTFS heruntergeladen, habe es allerdings abgespeckt. Heißt ich habe ein valides kleineres GTFS erzeugt von ein paar Linien (zum Testen).
-
+Im Paper wird von "Minimum Change Time" geredet, also wenn eine Station mehrere Gleise hat, und der Benutzer das Gleis wechseln muss. Dies nimmt Zeit in Anspruch und muss berücksichtigt werden.
+Aber in diesen GTFS sind einzelne Gleise als einzelne Station-IDs aufgelistet und deswegen ist hier die "Minimum Change Time" die Dauer des Transfers.
+Heißt: "Minimum Change Time" wird mit unseren Footpath abgehandelt.
 
 # Quellen
 
 - https://i11www.iti.kit.edu/_media/teaching/sommer2014/routenplanung/vorlesung4.pdf
+- https://i11www.iti.kit.edu/_media/teaching/theses/ba-groetschla.pdf
 - https://www.youtube.com/watch?v=dQw4w9WgXcQ
 - https://newbedev.com/c-split-string-by-regex
 - https://www.systutorials.com/how-to-process-a-file-line-by-line-in-c/

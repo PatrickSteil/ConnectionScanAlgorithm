@@ -3,11 +3,14 @@ stop_id,stop_name,stop_lat,stop_lon,location_type,platform_code
 51502,Dossenheim Bahnhof,49.4485531,8.6695331,0,2
 51601,Dossenheim Süd,49.4455631,8.6752911,0,1
 51602,Dossenheim Süd,49.4460531,8.674995,0,2
+69501,Jakobsgasse,49.4010019,8.63307,0,B
 69502,Jakobsgasse,49.4010431,8.6328369,0,B
 69521,Jakobsgasse,49.4010019,8.63307,0,V1
+69522,Jakobsgasse,49.4010431,8.6328369,0,A
+69701,Eppelheim Rathaus,49.40161,8.6291,0,B
+69702,Eppelheim Rathaus,49.4016281,8.6288661,0,A
 69601,Kirchheimer Straße,49.3997919,8.6273569,0,n/a
-69701,Eppelheim Rathaus,49.40161,8.6291,0,A
-69702,Eppelheim Rathaus,49.4016281,8.6288661,0,B
+69641,Kirchheimer Straße,49.3998211,8.6272489,0,A
 113221,Biethsstraße,49.4298719,8.6825231,0,n/a
 113222,Biethsstraße,49.4306781,8.6825139,0,n/a
 113301,Burgstraße,49.4343531,8.6822531,0,A
@@ -29,6 +32,7 @@ stop_id,stop_name,stop_lat,stop_lon,location_type,platform_code
 114601,Bismarckplatz,49.4098639,8.693195,0,A
 114602,Bismarckplatz,49.4094489,8.6929789,0,B
 114901,Rudolf-Diesel-Straße,49.3968811,8.6790639,0,B
+114921,Rudolf-Diesel-Straße,49.3968811,8.6790639,0,A
 114922,Rudolf-Diesel-Straße,49.3959861,8.6777981,0,n/a
 115021,Christuskirche,49.401815,8.6850919,0,n/a
 115022,Christuskirche,49.4015869,8.6853161,0,n/a

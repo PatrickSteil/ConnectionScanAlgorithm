@@ -1,9 +1,6 @@
 #ifndef GTFS_R_h
 #define GTFS_R_h
 
-// string.compare == 0 if equal, so we can write this as negation (!)
-#define COMPARE_STR_MACRO(X, Y)  (!X.compare(Y))
-
 #include "Core.h"
 #include "Connection.h"
 #include <fstream>
@@ -28,8 +25,16 @@ private:
 		while (std::getline(file, current_str)) {
 			split = this->split(current_str, ",");
 			split_iter = split.begin();
-
-			this->addStation(Station(std::stoi(*split_iter++), *split_iter));
+			this->addStation(
+				Station(
+					std::stoi(*split_iter++), 
+					*split_iter++,
+					*split_iter++,
+					*split_iter++,
+					std::stoi(*split_iter++),
+					*split_iter
+					)
+			);
 		}
 		file.close();
 	};
@@ -77,7 +82,7 @@ private:
 		while (std::getline(file, current_str)) {
 			split = this->split(current_str, ",");
 			split_iter = split.begin();
-			if (COMPARE_STR_MACRO(current_trip, *split_iter)) {
+			if (!current_trip.compare(*split_iter)) {
 				split_iter++;
 				// same trip, so we can create new Connection
 				current_arr_id = *split_iter++;
@@ -129,6 +134,18 @@ public:
 	void createTransfersFile() {
 		// HEADER 
 		// from_stop_id,to_stop_id,transfer_type,min_transfer_time
+		this->sortStationsByLat();
+		
+		for (std::vector<Station>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		{
+			Station current_station = *i++;
+
+			while (abs(current_station.getLatAsFloat() - (*i).getLatAsFloat()) < 0.0009) {
+				std::cout << current_station << " <-> " << (*i) << ": " << current_station.getDistance(*i) << std::endl;
+				i++;
+			}
+			i = this->stations.end();
+		}
 	};
 };
 #endif

@@ -30,6 +30,15 @@ public:
 
 	void sortConnections() { std::sort(this->connections.begin(), this->connections.end()); }
 
+	void sortStationsByLat()
+	{ 
+		std::sort(this->stations.begin(), this->stations.end(),
+			[](Station & a, Station & b) { 
+				return a.getLatAsFloat() > b.getLatAsFloat(); 
+			}
+		); 
+	}
+
 	std::vector<Connection>::iterator findFirstDep(unsigned int dep_time) {
 		// lower_bound has log_2(n) Complexity
 		return std::lower_bound(this->connections.begin(), this->connections.end(), dep_time);
@@ -40,9 +49,10 @@ public:
 			std::cout << (*i) << '\n';
 	}
 
-	// TODO
+
 	void csa(unsigned int time, unsigned int from_id, unsigned int to_id) {
 		unsigned int infty = (~0);
+
 		// https://stackoverflow.com/a/3578247
 		std::unordered_map<unsigned int, unsigned int> map;
 
@@ -63,13 +73,13 @@ public:
 
 		while (conn != this->connections.end() && notFinished) {
 			// can the connection be reached ?
-			if ( map[(*conn).getDepartureID()] != infty) {
+			if (map[(*conn).getDepartureID()] != infty) {
 				// update time in map
-				if ( map[(*conn).getArrivalID()] > (*conn).getArrivalTime() ) {
+				if (map[(*conn).getArrivalID()] > (*conn).getArrivalTime()) {
 					map[(*conn).getArrivalID()] = (*conn).getArrivalTime();
 				}
-				if ((*conn).getArrivalID() == to_id) {
-					std::cout << "THE Conncetion: " << (*conn) << std::endl;
+				if (map[to_id] < (*conn).getDepartureTime()) {
+					// this connection departs later than a earlier found journey to to_id, so we can stop
 					notFinished = false;
 				}
 			}
@@ -78,8 +88,60 @@ public:
 		// print the map
 		for(auto it = map.cbegin(); it != map.cend(); ++it)
 		{
-		    std::cout << it->first << ": " << it->second << "\n";
+			if (it->second != infty)
+				std::cout << it->first << ": " << it->second << "\n";
 		}
+	};
+
+
+	std::vector<Connection*> csa_lines(unsigned int time, unsigned int from_id, unsigned int to_id) {
+		unsigned int infty = (~0);
+
+		// https://stackoverflow.com/a/3578247
+		std::unordered_map<unsigned int, Connection*> map;
+
+		map.reserve(this->stations.size());
+
+		for (std::vector<Station>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		{
+			map[(*i).getID()] = new Connection();
+		}
+
+		map[from_id] = new Connection(from_id, from_id, time, time);
+
+		// find first departure at time
+		std::vector<Connection>::iterator conn = this->findFirstDep(time);
+
+		bool notFinished = true;
+
+		while (conn != this->connections.end() && notFinished) {
+			// can the connection be reached ?
+			if (map[(*conn).getDepartureID()]->getArrivalID() != infty) {
+				// update time in map
+				if (map[(*conn).getArrivalID()]->getArrivalTime() > (*conn).getArrivalTime()) {
+					map[(*conn).getArrivalID()] = &(*conn);
+				}
+				if (map[to_id]->getDepartureTime() < (*conn).getDepartureTime()) {
+					// this connection departs later than a earlier found journey to to_id, so we can stop
+					notFinished = false;
+				}
+			}
+			conn++;
+		}
+		
+		if (map[to_id]->getArrivalTime() == infty) {
+			return {};
+		}
+		std::vector<Connection*> result;
+
+		unsigned int current_station = to_id;
+		while (map[current_station]->getDepartureID() != from_id) {
+			result.push_back(map[current_station]);
+			current_station = map[current_station]->getDepartureID();
+		}
+		result.push_back(map[current_station]);
+		std::reverse(result.begin(), result.end());
+		return result;
 	};
 };
 
