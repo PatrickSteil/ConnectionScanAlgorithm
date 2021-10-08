@@ -115,8 +115,8 @@ public:
 		bool notFinished = true;
 
 		while (conn != this->connections.end() && notFinished) {
-			// can the connection be reached ?
-			if (map[(*conn).getDepartureID()]->getArrivalID() != infty) {
+			// can the connection be reached ? the right part is to check if we are at the station at the departureTime
+			if (map[(*conn).getDepartureID()]->getArrivalID() != infty && map[(*conn).getDepartureID()]->getArrivalTime() <= (*conn).getDepartureTime()) {
 				// update time in map
 				if (map[(*conn).getArrivalID()]->getArrivalTime() > (*conn).getArrivalTime()) {
 					map[(*conn).getArrivalID()] = &(*conn);

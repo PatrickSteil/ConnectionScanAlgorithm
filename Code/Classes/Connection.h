@@ -9,6 +9,19 @@ private:
 	unsigned int dep_id, arr_id, dep_time, arr_time;
 	std::string trip_id;
 
+	std::string getTimeAsString(unsigned int time) {
+		unsigned int hour = time / 3600;
+		time -= hour * 3600;
+		unsigned int minutes = time / 60;
+		time -= minutes * 60;
+		return this->numberAsTwoDigits(hour) + ":" + this->numberAsTwoDigits(minutes) + ":" + this->numberAsTwoDigits(time);
+	}
+
+	std::string numberAsTwoDigits(unsigned int number) {
+		if (number < 10) return "0"+std::to_string(number);
+		return std::to_string(number);
+	}
+
 public:
 	Connection() {
 		this->dep_id = (~0);
@@ -41,8 +54,8 @@ public:
 		return (conn1.dep_time < time);
 	};
 
-	friend std::ostream& operator<< (std::ostream& os, const Connection& connection) {
-		os << connection.trip_id << ": " << connection.dep_id << " [" << connection.dep_time << "] -> " << connection.arr_id << " [" << connection.arr_time << "]";
+	friend std::ostream& operator<< (std::ostream& os, Connection& connection) {
+		os << connection.trip_id << ": " << connection.dep_id << " [" << connection.getTimeAsString(connection.dep_time) << "] -> " << connection.arr_id << " [" << connection.getTimeAsString(connection.arr_time) << "]";
 		return os;
 	}
 };
