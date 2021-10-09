@@ -1,4 +1,4 @@
-# Praktikum_CSA
+# Connection Scan Algorithm
 
 Programmierpraktikum bei Herrn Prof Schulz
 
@@ -19,6 +19,10 @@ Programmierpraktikum bei Herrn Prof Schulz
 Im Paper wird von "Minimum Change Time" geredet, also wenn eine Station mehrere Gleise hat, und der Benutzer das Gleis wechseln muss. Dies nimmt Zeit in Anspruch und muss berücksichtigt werden.
 Aber in diesen GTFS sind einzelne Gleise als einzelne Station-IDs aufgelistet und deswegen ist hier die "Minimum Change Time" die Dauer des Transfers.
 Heißt: "Minimum Change Time" wird mit unseren Footpath abgehandelt.
+
+Wird auch im Paper "Connection Scan Accerlerated" wie folgt erläutert:
+
+It [GTFS] only allows for footpaths between two stops (...) Many feeds model large train stations not as a single stop but each railway platform inside the station as individual stop and connect the platforms using footpaths.
 
 # Quellen
 
