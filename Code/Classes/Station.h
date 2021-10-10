@@ -1,6 +1,8 @@
 #ifndef STAT_h
 #define STAT_h
 
+#include "Transfer.h"
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -21,13 +23,20 @@ public:
 	};
 
 	// stop_id,stop_name,stop_lat,stop_lon,location_type,platform_code
-	Station(unsigned int stop_id, std::string stop_name, std::string stop_lat, std::string stop_lon, unsigned int location_type, std::string platform_code) {
+	Station(unsigned int stop_id, std::string stop_name, std::string stop_lat, std::string stop_lon, unsigned int location_type=0, std::string platform_code="") {
 		this->stop_id = stop_id;
 		this->stop_name = stop_name;
 		this->location_type = location_type;
 		this->stop_lat = stop_lat;
 		this->stop_lon = stop_lon;
 		this->platform_code = platform_code;
+	}
+
+	Station(std::string stop_name, unsigned int stop_id, std::string stop_lat, std::string stop_lon) {
+		this->stop_id = stop_id;
+		this->stop_name = stop_name;
+		this->stop_lat = stop_lat;
+		this->stop_lon = stop_lon;
 	}
 
 	Station(std::string line) {
@@ -54,8 +63,7 @@ public:
 	};
 
 	~Station() {};
-
-
+	
 	int getID() {
 		return this->stop_id;
 	}

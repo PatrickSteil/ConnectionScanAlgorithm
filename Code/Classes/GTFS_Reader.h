@@ -3,6 +3,7 @@
 
 #include "Core.h"
 #include "Connection.h"
+#include "Transfer.h"
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -107,6 +108,33 @@ private:
 		file.close();
 	}
 
+	void readTransferFile() {
+		// HEADER 
+		// from_stop_id,to_stop_id,transfer_type,min_transfer_time
+		if (!std::__fs::filesystem::exists(this->filename+"/transfers.txt")) return;
+
+		std::string current_str;
+		unsigned int current_dep_id, 
+			current_arr_id, 
+			current_duration;
+		std::vector<std::string>::iterator split_iter;	// "splitter" wäre ein cooler Name :D
+		std::vector<std::string> split;
+
+		std::ifstream file(this->filename + "/transfers.txt");
+
+		std::getline(file, current_str);		// Header, we dont need -> just ignore the first line
+		while (std::getline(file, current_str)) {
+			split = this->split(current_str, ",");
+			split_iter = split.begin();
+			current_dep_id = std::stoi(*split_iter++);
+			current_arr_id = std::stoi(*split_iter++);
+			split_iter++;
+			current_duration = std::stoi(*split_iter);
+			this->addTransfer(Transfer(current_dep_id, current_arr_id, current_duration));
+		}
+		file.close();
+	};
+
 public:
 	GTFS_Reader(std::string filename) { this->filename = filename; };
 	~GTFS_Reader() {};
@@ -115,6 +143,7 @@ public:
 		this->readStations();
 		this->readConnections();
 		this->sortConnections();
+		this->readTransferFile();
 	};
 	
 	
@@ -129,23 +158,5 @@ public:
 	std::vector<std::string> split(const std::string& str, const std::string& regex) {
 		return {std::sregex_token_iterator(str.begin(), str.end(), std::regex(regex), -1), std::sregex_token_iterator()};
 	}
-
-	// Create "Footpath" just by GEO-Distance and average walking speed 1.4 m/s
-	void createTransfersFile() {
-		// HEADER 
-		// from_stop_id,to_stop_id,transfer_type,min_transfer_time
-		this->sortStationsByLat();
-		
-		for (std::vector<Station>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
-		{
-			Station current_station = *i++;
-
-			while (abs(current_station.getLatAsFloat() - (*i).getLatAsFloat()) < 0.0009) {
-				std::cout << current_station << " <-> " << (*i) << ": " << current_station.getDistance(*i) << std::endl;
-				i++;
-			}
-			i = this->stations.end();
-		}
-	};
 };
 #endif

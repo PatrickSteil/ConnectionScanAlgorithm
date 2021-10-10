@@ -1,0 +1,11 @@
+route_long_name,route_short_name,agency_id,route_type,route_id
+EC,EC,1,2,5
+EN,EN,1,2,6
+EuroCity,EC,1,2,9
+EuroCity-Express,ECE,1,2,8
+EuroNight,EN,1,2,10
+IC,IC,1,2,3
+ICE,ICE,1,2,4
+Intercity,IC,1,2,1
+Intercity-Express,ICE,1,2,2
+RJ,RJ,1,2,7
