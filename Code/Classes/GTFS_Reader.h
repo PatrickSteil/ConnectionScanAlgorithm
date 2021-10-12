@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -111,8 +112,6 @@ private:
 	void readTransferFile() {
 		// HEADER 
 		// from_stop_id,to_stop_id,transfer_type,min_transfer_time
-		if (!std::__fs::filesystem::exists(this->filename+"/transfers.txt")) return;
-
 		std::string current_str;
 		unsigned int current_dep_id, 
 			current_arr_id, 
@@ -156,7 +155,8 @@ public:
 
 	// https://gist.github.com/filsinger/3910580
 	std::vector<std::string> split(const std::string& str, const std::string& regex) {
-		return {std::sregex_token_iterator(str.begin(), str.end(), std::regex(regex), -1), std::sregex_token_iterator()};
+		std::regex r(regex);
+		return {std::sregex_token_iterator(str.begin(), str.end(), r, -1), std::sregex_token_iterator()};
 	}
 };
 #endif
