@@ -121,6 +121,7 @@ private:
 			current_duration;
 		std::vector<std::string>::iterator split_iter;	// "splitter" wäre ein cooler Name :D
 		std::vector<std::string> split;
+		Station *dep_ptr;
 
 		std::ifstream file(this->filename + "/transfers.txt");
 
@@ -132,7 +133,8 @@ private:
 			current_arr_id = std::stoi(*split_iter++);
 			split_iter++;
 			current_duration = std::stoi(*split_iter);
-			this->addTransfer(Transfer(this->station_ptr_map[current_dep_id], this->station_ptr_map[current_arr_id], current_duration));
+			dep_ptr = this->station_ptr_map[current_dep_id];
+			dep_ptr->addTransfer(new Transfer(dep_ptr, this->station_ptr_map[current_arr_id], current_duration));
 		}
 		file.close();
 	};

@@ -1,12 +1,19 @@
 from math import cos, asin, sqrt, pi
+from grispy import GriSPy
+import numpy as np
 
 def distance(lat1, lon1, lat2, lon2):
 	p = pi/180
 	a = 0.5 - cos((lat2-lat1)*p)/2 + cos(lat1*p) * cos(lat2*p) * (1-cos((lon2-lon1)*p))/2
 	return 12742000 * asin(sqrt(a))
 
-directory = "DB_Fernverkehr_GTFS/"
-directory = "HD_GTFS/"
+
+
+
+directory = "RNV_GTFS_original/"
+
+all_stations = []
+data = []
 
 same_stations = {}
 with open(directory+"stops.txt", "r") as file:
@@ -16,12 +23,19 @@ with open(directory+"stops.txt", "r") as file:
 			same_stations[stop_name].append([stop_id,stop_lat,stop_lon])
 		else:
 			same_stations[stop_name] = [[stop_id,stop_lat,stop_lon]]
+		# all_stations.append([stop_id, stop_name])
+		# data.append([float(stop_lat),float(stop_lon)])
 
+# gsp = GriSPy(np.array(data))
 
+# for current_station in data:
+# 	for x in gsp.bubble_neighbors(np.array([current_station]), distance_upper_bound=0.002)[1][0]:
+# 		print(all_stations[x])
+# 	print()
 with open(directory+"transfers.txt", "w") as file:
 	file.write("from_stop_id,to_stop_id,transfer_type,min_transfer_time\n")
 	for key in same_stations:
-		print(same_stations[key])
+		# print(same_stations[key])
 		if len(same_stations[key]) > 1:
 			for i in range(len(same_stations[key])):
 				j = i+1

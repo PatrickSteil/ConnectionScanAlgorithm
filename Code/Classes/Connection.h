@@ -43,7 +43,7 @@ public:
 	~Connection() {};
 
 	Station *getDeparture() { return this->dep_ptr; }
-	Station *getArrival() { return this->dep_ptr; }
+	Station *getArrival() { return this->arr_ptr; }
 	std::string getDepartureName() { return this->dep_ptr->getName(); }
 	std::string getArrivalName() { return this->arr_ptr->getName(); }
 	unsigned int getDepartureID() { return this->dep_ptr->getID(); }
@@ -61,7 +61,7 @@ public:
 	};
 
 	friend std::ostream& operator<< (std::ostream& os, Connection& connection) {
-		os << connection.trip_id << ":\t\t\t" << connection.getDepartureName() << "\t[" << connection.getTimeAsString(connection.dep_time) << "]\t\t->\t\t" << connection.getArrivalName() << "\t[" << connection.getTimeAsString(connection.arr_time) << "]";
+		os << connection.trip_id << ":\t\t" << connection.getDepartureName() << "\t[" << connection.getTimeAsString(connection.dep_time) << "]\t->\t" << connection.getArrivalName() << "\t[" << connection.getTimeAsString(connection.arr_time) << "]";
 		return os;
 	}
 };

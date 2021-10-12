@@ -1,6 +1,8 @@
 #ifndef STAT_h
 #define STAT_h
 
+class Transfer;
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -12,6 +14,7 @@ class Station
 private:
 	unsigned int stop_id, location_type;
 	std::string stop_name, stop_lat, stop_lon, platform_code;
+	std::vector<Transfer*> transfers;
 
 
 public:
@@ -37,29 +40,6 @@ public:
 		this->stop_lon = stop_lon;
 	}
 
-	Station(std::string line) {
-
-		std::vector<std::string> out;
-		std::stringstream ss(line);
- 
-		std::string s;
-		while (std::getline(ss, s, ',')) {
-			out.push_back(s);
-		}
-		
-		this->stop_id = std::stoi(out.front());
-		out.erase(out.begin());
-		this->stop_name = out.front();
-		out.erase(out.begin());
-		this->stop_lat = out.front();
-		out.erase(out.begin());
-		this->stop_lon = out.front();
-		out.erase(out.begin());
-		this->location_type = std::stoi(out.front());
-		out.erase(out.begin());
-		this->platform_code = out.front();
-	};
-
 	~Station() {};
 	
 	int getID() {
@@ -77,6 +57,8 @@ public:
 	float getLonAsFloat() {
 		return std::stof(this->stop_lon);
 	}
+
+	void addTransfer(Transfer *ptr) { this->transfers.push_back(ptr); }
 
 	std::string getPlatformCode() { return this->platform_code; }
 

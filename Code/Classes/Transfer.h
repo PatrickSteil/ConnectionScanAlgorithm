@@ -1,7 +1,9 @@
 #ifndef TRAN_h
 #define TRAN_h
 
-#include "Station.h"
+class Station;
+
+// #include "Station.h"
 #include <iostream>
 
 class Transfer
