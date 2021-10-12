@@ -58,6 +58,8 @@ public:
 		return std::stof(this->stop_lon);
 	}
 
+	std::vector<Transfer*> *getTransfers() { return &(this->transfers); }
+
 	void addTransfer(Transfer *ptr) { this->transfers.push_back(ptr); }
 
 	std::string getPlatformCode() { return this->platform_code; }

@@ -58,7 +58,7 @@ public:
 		// find first departure at time
 		std::vector<Connection*>::iterator conn_itr = this->findFirstDep(time);
 
-		std::vector<Transfer> *current_transfers;
+		std::vector<Transfer*> *current_transfers;
 
 		bool notFinished = true;
 
@@ -73,11 +73,12 @@ public:
 					if (map[(*conn_itr)->getArrivalID()] > (*conn_itr)->getArrivalTime()) {
 						map[(*conn_itr)->getArrivalID()] = (*conn_itr)->getArrivalTime();
 					}
-					current_transfers = this->getTransferByStationID((*conn_itr)->getArrivalID());
-					for (std::vector<Transfer>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
+					current_transfers = (*conn_itr)->getArrival()->getTransfers();
+					// current_transfers = this->getTransferByStationID((*conn_itr)->getArrivalID());
+					for (std::vector<Transfer*>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
 					{
-						if (map[(*trans).getArrivalID()] > map[(*conn_itr)->getArrivalID()] + (*trans).getDuration()) {
-							map[(*trans).getArrivalID()] = map[(*conn_itr)->getArrivalID()] + (*trans).getDuration();
+						if (map[(*trans)->getArrivalID()] > map[(*conn_itr)->getArrivalID()] + (*trans)->getDuration()) {
+							map[(*trans)->getArrivalID()] = map[(*conn_itr)->getArrivalID()] + (*trans)->getDuration();
 						}
 					}
 				}
@@ -108,7 +109,7 @@ public:
 
 		map[from_id] = new Connection(this->station_ptr_map[from_id], this->station_ptr_map[from_id], time, time);
 
-		std::vector<Transfer> *current_transfers;
+		std::vector<Transfer*> *current_transfers;
 
 		// find first departure at time
 		std::vector<Connection*>::iterator conn_itr = this->findFirstDep(time);
@@ -126,11 +127,12 @@ public:
 					if (map[(*conn_itr)->getArrivalID()]->getArrivalTime() > (*conn_itr)->getArrivalTime()) {
 						map[(*conn_itr)->getArrivalID()] = (*conn_itr);
 					}
-					current_transfers = this->getTransferByStationID((*conn_itr)->getArrivalID());
-					for (std::vector<Transfer>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
+					current_transfers = (*conn_itr)->getArrival()->getTransfers();
+					// current_transfers = this->getTransferByStationID((*conn_itr)->getArrivalID());
+					for (std::vector<Transfer*>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
 					{
-						if (map[(*trans).getArrivalID()]->getArrivalTime() > map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans).getDuration()) {
-							map[(*trans).getArrivalID()] = new Connection((*trans).getDeparture(), (*trans).getArrival(), map[(*conn_itr)->getArrivalID()]->getArrivalTime(), map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans).getDuration(), "Platform: "+(*trans).getDeparture()->getPlatformCode()+" -> "+(*trans).getArrival()->getPlatformCode());
+						if (map[(*trans)->getArrivalID()]->getArrivalTime() > map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans)->getDuration()) {
+							map[(*trans)->getArrivalID()] = new Connection((*trans)->getDeparture(), (*trans)->getArrival(), map[(*conn_itr)->getArrivalID()]->getArrivalTime(), map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans)->getDuration(), "Platform: "+(*trans)->getDeparture()->getPlatformCode()+" -> "+(*trans)->getArrival()->getPlatformCode());
 						}
 					}
 				}
