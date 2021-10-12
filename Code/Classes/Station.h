@@ -1,8 +1,6 @@
 #ifndef STAT_h
 #define STAT_h
 
-#include "Transfer.h"
-
 #include <string>
 #include <vector>
 #include <sstream>

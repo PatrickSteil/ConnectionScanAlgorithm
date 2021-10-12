@@ -11,51 +11,32 @@
 class Core
 {
 public:
-	std::vector<Connection> connections;
-	std::vector<Station> stations;
+	std::vector<Connection*> connections;
+	std::vector<Station*> stations;
 	std::unordered_map<unsigned int, std::vector<Transfer>> transfer_map;
+	std::unordered_map<unsigned int, Station*> station_ptr_map;
 	Core() {};
 	~Core() {};
 	
-	void addConnection(Connection new_connection) {
-		// TODO: 
-		/* 
-			- Maybe using a Binary Tree or BTree as Navigation Structure for better time results
-			- How can the complexity of binary_sarch on a vector be log(n) https://www.cplusplus.com/reference/algorithm/binary_search/
-		*/
+	void addConnection(Connection *new_connection_ptr) { this->connections.push_back(new_connection_ptr);}
 
-		// this->connections.insert(std::upper_bound(this->connections.begin(), this->connections.end(), new_connection), new_connection);
-		this->connections.push_back(new_connection);
+	void addStation(Station *new_station_ptr) {
+		this->stations.push_back(new_station_ptr);
+		this->station_ptr_map[new_station_ptr->getID()] = new_station_ptr;
 	}
-
-	void addStation(Station new_station) { this->stations.push_back(new_station); }
 
 	void addTransfer(Transfer new_transfer) { this->transfer_map[new_transfer.getDepartureID()].push_back(new_transfer); }
 
-	void sortConnections() { std::sort(this->connections.begin(), this->connections.end()); }
 
-	void sortStationsByLat()
-	{ 
-		std::sort(this->stations.begin(), this->stations.end(),
-			[](Station & a, Station & b) { 
-				return a.getLatAsFloat() > b.getLatAsFloat(); 
-			}
-		); 
+	void sortConnections() { 
+		std::sort(this->connections.begin(), this->connections.end(), [](Connection *a, Connection *b) { return (*a < *b);});
 	}
 
-	std::vector<Connection>::iterator findFirstDep(unsigned int dep_time) {
-		// lower_bound has log_2(n) Complexity
-		return std::lower_bound(this->connections.begin(), this->connections.end(), dep_time);
+	std::vector<Connection*>::iterator findFirstDep(unsigned int dep_time) {
+		return std::lower_bound(this->connections.begin(), this->connections.end(), dep_time, [](Connection *a, unsigned int time) { return (*a < time); });
 	}
 
-	void pprint() {
-		for (std::vector<Connection>::iterator i = this->connections.begin(); i != this->connections.end(); ++i)
-			std::cout << (*i) << '\n';
-	}
-
-	std::vector<Transfer>* getTransferByStationID(unsigned int id) {
-		return &(this->transfer_map[id]);
-	}
+	std::vector<Transfer>* getTransferByStationID(unsigned int id) { return &(this->transfer_map[id]); }
 
 
 	void csa(unsigned int time, unsigned int from_id, unsigned int to_id) {
@@ -66,42 +47,42 @@ public:
 
 		map.reserve(this->stations.size());
 
-		for (std::vector<Station>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
-			map[(*i).getID()] = infty;
+			map[(*i)->getID()] = infty;
 		}
 
 		// init departure id with time
 		map[from_id] = time;
 
 		// find first departure at time
-		std::vector<Connection>::iterator conn = this->findFirstDep(time);
+		std::vector<Connection*>::iterator conn_itr = this->findFirstDep(time);
 
 		std::vector<Transfer> *current_transfers;
 
 		bool notFinished = true;
 
-		while (conn != this->connections.end() && notFinished) {
+		while (conn_itr != this->connections.end() && notFinished) {
 			// can the connection be reached ?
-			if (map[(*conn).getDepartureID()] != infty) {
-				if (map[to_id] < (*conn).getDepartureTime()) {
+			if (map[(*conn_itr)->getDepartureID()] != infty) {
+				if (map[to_id] < (*conn_itr)->getDepartureTime()) {
 					// this connection departs later than a earlier found journey to to_id, so we can stop
 					notFinished = false;
 				} else {
 					// update time in map
-					if (map[(*conn).getArrivalID()] > (*conn).getArrivalTime()) {
-						map[(*conn).getArrivalID()] = (*conn).getArrivalTime();
+					if (map[(*conn_itr)->getArrivalID()] > (*conn_itr)->getArrivalTime()) {
+						map[(*conn_itr)->getArrivalID()] = (*conn_itr)->getArrivalTime();
 					}
-					current_transfers = this->getTransferByStationID((*conn).getArrivalID());
+					current_transfers = this->getTransferByStationID((*conn_itr)->getArrivalID());
 					for (std::vector<Transfer>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
 					{
-						if (map[(*trans).getArrivalID()] > map[(*conn).getArrivalID()] + (*trans).getDuration()) {
-							map[(*trans).getArrivalID()] = map[(*conn).getArrivalID()] + (*trans).getDuration();
+						if (map[(*trans).getArrivalID()] > map[(*conn_itr)->getArrivalID()] + (*trans).getDuration()) {
+							map[(*trans).getArrivalID()] = map[(*conn_itr)->getArrivalID()] + (*trans).getDuration();
 						}
 					}
 				}
 			}
-			conn++;
+			conn_itr++;
 		}
 		// print the map
 		for(auto it = map.cbegin(); it != map.cend(); ++it)
@@ -120,41 +101,41 @@ public:
 
 		map.reserve(this->stations.size());
 
-		for (std::vector<Station>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
-			map[(*i).getID()] = new Connection();
+			map[(*i)->getID()] = new Connection();
 		}
 
-		map[from_id] = new Connection(from_id, from_id, time, time);
+		map[from_id] = new Connection(this->station_ptr_map[from_id], this->station_ptr_map[from_id], time, time);
 
 		std::vector<Transfer> *current_transfers;
 
 		// find first departure at time
-		std::vector<Connection>::iterator conn = this->findFirstDep(time);
+		std::vector<Connection*>::iterator conn_itr = this->findFirstDep(time);
 
 		bool notFinished = true;
 
-		while (conn != this->connections.end() && notFinished) {
+		while (conn_itr != this->connections.end() && notFinished) {
 			// can the connection be reached ? the right part is to check if we are at the station at the departureTime
-			if (map[(*conn).getDepartureID()]->getArrivalID() != infty && map[(*conn).getDepartureID()]->getArrivalTime() <= (*conn).getDepartureTime()) {
-				if (map[to_id]->getDepartureTime() < (*conn).getDepartureTime()) {
+			if (map[(*conn_itr)->getDepartureID()]->getArrivalTime() != infty && map[(*conn_itr)->getDepartureID()]->getArrivalTime() <= (*conn_itr)->getDepartureTime()) {
+				if (map[to_id]->getDepartureTime() < (*conn_itr)->getDepartureTime()) {
 					// this connection departs later than a earlier found journey to to_id, so we can stop
 					notFinished = false;
 				} else {
 					// update time in map
-					if (map[(*conn).getArrivalID()]->getArrivalTime() > (*conn).getArrivalTime()) {
-						map[(*conn).getArrivalID()] = &(*conn);
+					if (map[(*conn_itr)->getArrivalID()]->getArrivalTime() > (*conn_itr)->getArrivalTime()) {
+						map[(*conn_itr)->getArrivalID()] = (*conn_itr);
 					}
-					current_transfers = this->getTransferByStationID((*conn).getArrivalID());
+					current_transfers = this->getTransferByStationID((*conn_itr)->getArrivalID());
 					for (std::vector<Transfer>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
 					{
-						if (map[(*trans).getArrivalID()]->getArrivalTime() > map[(*conn).getArrivalID()]->getArrivalTime() + (*trans).getDuration()) {
-							map[(*trans).getArrivalID()] = new Connection((*trans).getDepartureID(), (*trans).getArrivalID(), map[(*conn).getArrivalID()]->getArrivalTime(), map[(*conn).getArrivalID()]->getArrivalTime() + (*trans).getDuration(), "Walking");
+						if (map[(*trans).getArrivalID()]->getArrivalTime() > map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans).getDuration()) {
+							map[(*trans).getArrivalID()] = new Connection((*trans).getDeparture(), (*trans).getArrival(), map[(*conn_itr)->getArrivalID()]->getArrivalTime(), map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans).getDuration(), "Walking");
 						}
 					}
 				}
 			}
-			conn++;
+			conn_itr++;
 		}
 		
 		if (map[to_id]->getArrivalTime() == infty) {

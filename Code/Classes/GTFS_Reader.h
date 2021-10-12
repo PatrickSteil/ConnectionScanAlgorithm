@@ -28,7 +28,7 @@ private:
 			split = this->split(current_str, ",");
 			split_iter = split.begin();
 			this->addStation(
-				Station(
+				new Station(
 					std::stoi(*split_iter++), 
 					*split_iter++,
 					*split_iter++,
@@ -73,9 +73,9 @@ private:
 
 			and we want it converted into this:
 		
-			Connection(113603, 133301, 09:07:00, 09:09:00, 21-1-1-32820)
-			Connection(133301, 122601, 09:09:00, 09:11:00, 21-1-1-32820)
-			Connection(122601, 122801, 09:11:00, 09:12:00, 21-1-1-32820)
+			Connection(pointer -> 113603, 133301, 09:07:00, 09:09:00, 21-1-1-32820)
+			Connection(pointer -> 133301, 122601, 09:09:00, 09:11:00, 21-1-1-32820)
+			Connection(pointer -> 122601, 122801, 09:11:00, 09:12:00, 21-1-1-32820)
 			...
 		*/
 		
@@ -91,8 +91,11 @@ private:
 				current_arr_time = *split_iter++;
 
 				this->addConnection(
-					Connection(std::stoi(current_dep_id), std::stoi(current_arr_id), 
-						this->getTimeAsInt(current_dep_time), this->getTimeAsInt(current_arr_time), 
+					new Connection(
+						this->station_ptr_map[std::stoi(current_dep_id)],
+						this->station_ptr_map[std::stoi(current_arr_id)],
+						this->getTimeAsInt(current_dep_time), 
+						this->getTimeAsInt(current_arr_time), 
 						current_trip)
 				);
 
@@ -129,7 +132,7 @@ private:
 			current_arr_id = std::stoi(*split_iter++);
 			split_iter++;
 			current_duration = std::stoi(*split_iter);
-			this->addTransfer(Transfer(current_dep_id, current_arr_id, current_duration));
+			this->addTransfer(Transfer(this->station_ptr_map[current_dep_id], this->station_ptr_map[current_arr_id], current_duration));
 		}
 		file.close();
 	};
