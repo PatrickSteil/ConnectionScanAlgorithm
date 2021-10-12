@@ -130,7 +130,7 @@ public:
 					for (std::vector<Transfer>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
 					{
 						if (map[(*trans).getArrivalID()]->getArrivalTime() > map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans).getDuration()) {
-							map[(*trans).getArrivalID()] = new Connection((*trans).getDeparture(), (*trans).getArrival(), map[(*conn_itr)->getArrivalID()]->getArrivalTime(), map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans).getDuration(), "Walking");
+							map[(*trans).getArrivalID()] = new Connection((*trans).getDeparture(), (*trans).getArrival(), map[(*conn_itr)->getArrivalID()]->getArrivalTime(), map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans).getDuration(), "Platform: "+(*trans).getDeparture()->getPlatformCode()+" -> "+(*trans).getArrival()->getPlatformCode());
 						}
 					}
 				}

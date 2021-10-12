@@ -78,6 +78,7 @@ public:
 		return std::stof(this->stop_lon);
 	}
 
+	std::string getPlatformCode() { return this->platform_code; }
 
 	friend std::ostream& operator<< (std::ostream& os, const Station& station) {
 		os << station.stop_id << " " << station.stop_name; //<< "\n" << station->stop_lat << ", " << station->stop_lon << "\n" << station->location_type << " " << station->platform_code;

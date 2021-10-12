@@ -61,7 +61,7 @@ public:
 	};
 
 	friend std::ostream& operator<< (std::ostream& os, Connection& connection) {
-		os << connection.trip_id << ": " << connection.getDepartureName() << " " << connection.getTimeAsString(connection.dep_time) << " -> " << connection.getArrivalName() << " " << connection.getTimeAsString(connection.arr_time);
+		os << connection.trip_id << ":\t\t\t" << connection.getDepartureName() << "\t[" << connection.getTimeAsString(connection.dep_time) << "]\t\t->\t\t" << connection.getArrivalName() << "\t[" << connection.getTimeAsString(connection.arr_time) << "]";
 		return os;
 	}
 };
