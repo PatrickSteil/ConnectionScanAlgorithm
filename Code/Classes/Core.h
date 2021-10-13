@@ -7,13 +7,13 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
+#include <omp.h>
 
 class Core
 {
 public:
 	std::vector<Connection*> connections;
 	std::vector<Station*> stations;
-	std::unordered_map<unsigned int, std::vector<Transfer>> transfer_map;
 	std::unordered_map<unsigned int, Station*> station_ptr_map;
 	Core() {};
 	~Core() {};
@@ -25,9 +25,6 @@ public:
 		this->station_ptr_map[new_station_ptr->getID()] = new_station_ptr;
 	}
 
-	void addTransfer(Transfer new_transfer) { this->transfer_map[new_transfer.getDepartureID()].push_back(new_transfer); }
-
-
 	void sortConnections() { 
 		std::sort(this->connections.begin(), this->connections.end(), [](Connection *a, Connection *b) { return (*a < *b);});
 	}
@@ -35,9 +32,6 @@ public:
 	std::vector<Connection*>::iterator findFirstDep(unsigned int dep_time) {
 		return std::lower_bound(this->connections.begin(), this->connections.end(), dep_time, [](Connection *a, unsigned int time) { return (*a < time); });
 	}
-
-	std::vector<Transfer>* getTransferByStationID(unsigned int id) { return &(this->transfer_map[id]); }
-
 
 	void csa(unsigned int time, unsigned int from_id, unsigned int to_id) {
 		unsigned int infty = (~0);
@@ -47,9 +41,13 @@ public:
 
 		map.reserve(this->stations.size());
 
-		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		#pragma omp parallel
 		{
-			map[(*i)->getID()] = infty;
+			#pragma omp for
+			for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+			{
+				map[(*i)->getID()] = infty;
+			}
 		}
 
 		// init departure id with time
@@ -102,9 +100,13 @@ public:
 
 		map.reserve(this->stations.size());
 
-		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		#pragma omp parallel
 		{
-			map[(*i)->getID()] = new Connection();
+			#pragma omp for
+			for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+			{
+				map[(*i)->getID()] = new Connection();
+			}
 		}
 
 		map[from_id] = new Connection(this->station_ptr_map[from_id], this->station_ptr_map[from_id], time, time);
@@ -128,7 +130,6 @@ public:
 						map[(*conn_itr)->getArrivalID()] = (*conn_itr);
 					}
 					current_transfers = (*conn_itr)->getArrival()->getTransfers();
-					// current_transfers = this->getTransferByStationID((*conn_itr)->getArrivalID());
 					for (std::vector<Transfer*>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
 					{
 						if (map[(*trans)->getArrivalID()]->getArrivalTime() > map[(*conn_itr)->getArrivalID()]->getArrivalTime() + (*trans)->getDuration()) {

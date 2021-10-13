@@ -16,7 +16,6 @@ int main(int argc, char const *argv[]) {
 
 	GTFS_Reader core("../RNV_gtfs_original");
 	core.init();
-	// core.createTransferFile();
 
 	std::cout << core.stations.size() << " stations & " << core.connections.size() << " connections loaded!" << std::endl;
 
@@ -40,6 +39,6 @@ int main(int argc, char const *argv[]) {
 	{
 		std::cout << *(*i) << std::endl;
 	}
-	std::cout << "Query took " << ms_double.count() << " ms!";
+	std::cout << "Query took " << ms_double.count() << " ms!\n";
 	return 0;
 }

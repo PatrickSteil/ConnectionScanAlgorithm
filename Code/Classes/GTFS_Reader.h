@@ -23,6 +23,9 @@ using namespace nanoflann;
 #include <string>
 #include <vector>
 
+// Parallel-stuff
+#include <omp.h>
+
 class GTFS_Reader : public Core
 {
 private:
@@ -123,7 +126,7 @@ private:
 		}
 
 		file.close();
-	}
+	};
 
 	void readTransferFile() {
 		// HEADER 
@@ -159,12 +162,14 @@ private:
 
 	void createCloud() {
 		this->cloud.pts.resize(this->stations.size());
-		
+
+		#pragma omp parallel
+		#pragma omp for
 		for (int i = 0; i < this->stations.size(); ++i) {
 			this->cloud.pts[i].x = this->stations[i]->getLatAsFloat();
 			this->cloud.pts[i].y = this->stations[i]->getLonAsFloat();
 		}
-	}
+	};
 
 public:
 	GTFS_Reader(std::string filename) { this->filename = filename; };
@@ -189,7 +194,7 @@ public:
 	std::vector<std::string> split(const std::string& str, const std::string& regex) {
 		std::regex r(regex);
 		return {std::sregex_token_iterator(str.begin(), str.end(), r, -1), std::sregex_token_iterator()};
-	}
+	};
 
 	void createTransferFile() {
 		/*
@@ -217,13 +222,17 @@ public:
 
 		size_t nMatches;
 
+		#pragma omp parallel for
 		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
 			float current_ptr[2] = { (*i)->getLatAsFloat(), (*i)->getLonAsFloat() };
 			nMatches = tree.radiusSearch(&current_ptr[0], search_radius, ret_matches, params);
 			for (size_t index = 0; index < nMatches; index++) {
 				if (this->stations[ret_matches[index].first]->getID() != (*i)->getID()) {
-					trans_file << std::endl << (*i)->getID() << "," << this->stations[ret_matches[index].first]->getID() << ",2," << (int) (ret_matches[index].second / avr_walking_speed);
+					#pragma omp critical
+					{
+						trans_file << std::endl << (*i)->getID() << "," << this->stations[ret_matches[index].first]->getID() << ",2," << (int) (ret_matches[index].second / avr_walking_speed);
+					}
 				}
 			}
 			ret_matches.clear();
