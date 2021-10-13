@@ -58,6 +58,14 @@ public:
 		return std::stof(this->stop_lon);
 	}
 
+	double getLatAsDouble() {
+		return std::stod(this->stop_lat);
+	}
+
+	double getLonAsDouble() {
+		return std::stod(this->stop_lon);
+	}
+
 	std::vector<Transfer*> *getTransfers() { return &(this->transfers); }
 
 	void addTransfer(Transfer *ptr) { this->transfers.push_back(ptr); }

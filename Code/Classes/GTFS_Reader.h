@@ -1,9 +1,21 @@
 #ifndef GTFS_R_h
 #define GTFS_R_h
 
+// CSA
 #include "Core.h"
+
+// Classes to handle the format
 #include "Connection.h"
 #include "Transfer.h"
+
+// k-d-Tree of nanoflann
+#include "../nanoflann/nanoflann.hpp"
+#include "../nanoflann/utils.h"
+#include <ctime>
+#include <cstdlib>
+
+using namespace nanoflann;
+
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -14,6 +26,7 @@
 class GTFS_Reader : public Core
 {
 private:
+	PointCloud<float> cloud;
 	std::string filename;
 
 	void readStations() {
@@ -125,6 +138,10 @@ private:
 
 		std::ifstream file(this->filename + "/transfers.txt");
 
+		if (!file.is_open()) {
+			std::cout << "No " << this->filename << "/transfers.txt found" << std::endl;
+			return;
+		}
 		std::getline(file, current_str);		// Header, we dont need -> just ignore the first line
 		while (std::getline(file, current_str)) {
 			split = this->split(current_str, ",");
@@ -138,6 +155,16 @@ private:
 		}
 		file.close();
 	};
+
+
+	void createCloud() {
+		this->cloud.pts.resize(this->stations.size());
+		
+		for (int i = 0; i < this->stations.size(); ++i) {
+			this->cloud.pts[i].x = this->stations[i]->getLatAsFloat();
+			this->cloud.pts[i].y = this->stations[i]->getLonAsFloat();
+		}
+	}
 
 public:
 	GTFS_Reader(std::string filename) { this->filename = filename; };
@@ -162,6 +189,46 @@ public:
 	std::vector<std::string> split(const std::string& str, const std::string& regex) {
 		std::regex r(regex);
 		return {std::sregex_token_iterator(str.begin(), str.end(), r, -1), std::sregex_token_iterator()};
+	}
+
+	void createTransferFile() {
+		/*
+		creates transfers.txt file from the stations
+		uses this repo [https://github.com/jlblancoc/nanoflann] and a self-written distance adapter
+		*/
+		this->createCloud();
+		std::ofstream trans_file(this->filename+"/transfers.txt");
+
+		// set header
+		trans_file << "from_stop_id,to_stop_id,transfer_type,min_transfer_time";
+
+		typedef KDTreeSingleIndexAdaptor<L_Coordinates_2_dim<float, PointCloud<float> > ,PointCloud<float>,2> my_kd_tree_t;
+
+		my_kd_tree_t tree(2, cloud, KDTreeSingleIndexAdaptorParams(10));
+		tree.buildIndex();
+
+		// to calc the seconds, speed is given in m/s
+		const float avr_walking_speed = 1.4;
+		const float search_radius = static_cast<float>(200); 	// meter
+		std::vector<std::pair<uint32_t, float>> ret_matches;
+
+		nanoflann::SearchParams params;
+		//params.sorted = false;
+
+		size_t nMatches;
+
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		{
+			float current_ptr[2] = { (*i)->getLatAsFloat(), (*i)->getLonAsFloat() };
+			nMatches = tree.radiusSearch(&current_ptr[0], search_radius, ret_matches, params);
+			for (size_t index = 0; index < nMatches; index++) {
+				if (this->stations[ret_matches[index].first]->getID() != (*i)->getID()) {
+					trans_file << std::endl << (*i)->getID() << "," << this->stations[ret_matches[index].first]->getID() << ",2," << (int) (ret_matches[index].second / avr_walking_speed);
+				}
+			}
+			ret_matches.clear();
+		}
+		trans_file.close();
 	}
 };
 #endif
