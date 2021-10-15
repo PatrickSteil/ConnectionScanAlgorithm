@@ -28,6 +28,7 @@ It [GTFS] only allows for footpaths between two stops (...) Many feeds model lar
 
 - https://i11www.iti.kit.edu/_media/teaching/sommer2014/routenplanung/vorlesung4.pdf
 - https://i11www.iti.kit.edu/_media/teaching/theses/ba-groetschla.pdf
+- https://arxiv.org/pdf/1703.05997v1.pdf
 - https://www.youtube.com/watch?v=dQw4w9WgXcQ
 - https://newbedev.com/c-split-string-by-regex
 - https://www.systutorials.com/how-to-process-a-file-line-by-line-in-c/

@@ -32,7 +32,22 @@ private:
 	PointCloud<float> cloud;
 	std::string filename;
 
+	unsigned int getNumberOfLinesInFile(std::string file_name) {
+		unsigned int number_of_lines = 0;
+		std::string line;
+		std::ifstream myfile(this->filename+"/"+file_name);
+
+		while (std::getline(myfile, line)) ++number_of_lines;
+		myfile.close();
+		// first line is Header
+		return --number_of_lines;
+	}
+
 	void readStations() {
+		unsigned int number_of_stations = this->getNumberOfLinesInFile("stops.txt");
+		this->stations.reserve(number_of_stations);
+		this->station_ptr_map.reserve(number_of_stations);
+
 		std::string current_str;
 		std::vector<std::string>::iterator split_iter;	// "splitter" wäre ein cooler Name :D
 		std::vector<std::string> split;
@@ -58,6 +73,7 @@ private:
 	};
 
 	void readConnections() {
+		this->connections.reserve(this->getNumberOfLinesInFile("stop_times.txt"));
 		std::string current_str, 
 			current_trip = "", 
 			current_dep_id, 
@@ -124,7 +140,6 @@ private:
 				current_dep_time = *split_iter;
 			}
 		}
-
 		file.close();
 	};
 
@@ -178,8 +193,18 @@ public:
 	void init() {
 		this->readStations();
 		this->readConnections();
-		this->sortConnections();
-		this->readTransferFile();
+		#pragma omp parallel 
+		#pragma omp single
+		{
+			#pragma omp task
+			{
+				this->sortConnections();
+			}
+			#pragma omp task
+			{
+				this->readTransferFile();
+			}
+		}
 	};
 	
 	

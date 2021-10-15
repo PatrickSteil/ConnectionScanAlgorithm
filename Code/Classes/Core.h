@@ -53,10 +53,17 @@ public:
 		// init departure id with time
 		map[from_id] = time;
 
+		// we can fill in the footpath from start id
+		std::vector<Transfer*> *current_transfers;
+
+		current_transfers = this->station_ptr_map[from_id]->getTransfers();
+		for (std::vector<Transfer*>::iterator trans = (*current_transfers).begin(); trans != (*current_transfers).end(); ++trans)
+		{
+			map[(*trans)->getArrivalID()] = time + (*trans)->getDuration();
+		}
+
 		// find first departure at time
 		std::vector<Connection*>::iterator conn_itr = this->findFirstDep(time);
-
-		std::vector<Transfer*> *current_transfers;
 
 		bool notFinished = true;
 

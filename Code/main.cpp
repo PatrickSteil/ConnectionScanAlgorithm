@@ -18,7 +18,6 @@ int main(int argc, char const *argv[]) {
 	core.init();
 
 	std::cout << core.stations.size() << " stations & " << core.connections.size() << " connections loaded!" << std::endl;
-
 	std::cout << "From Station:\t";
 	std::cin >> dep_id;
 	std::cout << "\nTo Station:\t";
