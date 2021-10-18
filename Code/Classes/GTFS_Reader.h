@@ -59,14 +59,21 @@ private:
 			split = this->split(current_str, ",");
 			split_iter = split.begin();
 			this->addStation(
-				new Station(
+			/*	new Station(
 					std::stoi(*split_iter++), 
 					*split_iter++,
 					*split_iter++,
 					*split_iter++,
 					std::stoi(*split_iter++),
 					*split_iter
-					)
+				)
+				*/
+				new Station(
+					std::stoi(*split_iter++), 
+					*split_iter++,
+					*split_iter++,
+					*split_iter
+				)
 			);
 		}
 		file.close();

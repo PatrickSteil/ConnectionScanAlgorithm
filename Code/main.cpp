@@ -14,9 +14,8 @@ int main(int argc, char const *argv[]) {
 	unsigned int dep_id, arr_id;
 	std::string time;
 
-	GTFS_Reader core("../RNV_gtfs_original");
+	GTFS_Reader core("../s_rb_bahn");
 	core.init();
-
 	std::cout << core.stations.size() << " stations & " << core.connections.size() << " connections loaded!" << std::endl;
 	std::cout << "From Station:\t";
 	std::cin >> dep_id;
