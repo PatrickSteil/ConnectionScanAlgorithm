@@ -22,9 +22,12 @@ using namespace nanoflann;
 #include <iterator>
 #include <string>
 #include <vector>
-
+#include <unordered_map>
 // Parallel-stuff
 #include <omp.h>
+
+// assertions
+#include <cassert>
 
 class GTFS_Reader : public Core
 {
@@ -45,8 +48,8 @@ private:
 
 	void readStations() {
 		unsigned int number_of_stations = this->getNumberOfLinesInFile("stops.txt");
-		this->stations.reserve(number_of_stations);
-		this->station_ptr_map.reserve(number_of_stations);
+		// this->stations.reserve(number_of_stations);
+		// this->station_ptr_map.reserve(number_of_stations);
 
 		std::string current_str;
 		std::vector<std::string>::iterator split_iter;	// "splitter" wäre ein cooler Name :D
@@ -80,7 +83,7 @@ private:
 	};
 
 	void readConnections() {
-		this->connections.reserve(this->getNumberOfLinesInFile("stop_times.txt"));
+		// this->connections.reserve(this->getNumberOfLinesInFile("stop_times.txt"));
 		std::string current_str, 
 			current_trip = "", 
 			current_dep_id, 
@@ -95,7 +98,7 @@ private:
 		/*
 			REMINDER! File looks like this:
 
-			"trip_id,stop_id,arrival_time,departure_time,stop_sequence
+			trip_id,stop_id,arrival_time,departure_time,stop_sequence
 			21-1-1-32820,113603,09:07:00,09:07:00,1
 			21-1-1-32820,133301,09:09:00,09:09:00,2
 			21-1-1-32820,122601,09:11:00,09:11:00,3
@@ -108,7 +111,7 @@ private:
 			21-2-2-25260,116822,07:01:00,07:01:00,1
 			21-2-2-25260,119322,07:01:30,07:01:30,2
 			21-2-2-25260,119402,07:02:30,07:02:30,3
-			...""
+			...
 
 			and we want it converted into this:
 		
@@ -119,11 +122,13 @@ private:
 		*/
 		
 		std::getline(file, current_str);		// Header, we dont need -> just ignore the first line
+		bool first_current_trip = false;
 
 		while (std::getline(file, current_str)) {
 			split = this->split(current_str, ",");
 			split_iter = split.begin();
 			if (!current_trip.compare(*split_iter)) {
+				if (!first_current_trip) first_current_trip = true;
 				split_iter++;
 				// same trip, so we can create new Connection
 				current_arr_id = *split_iter++;
@@ -137,16 +142,21 @@ private:
 						this->getTimeAsInt(current_arr_time), 
 						current_trip)
 				);
-
 				current_dep_id = current_arr_id;
 				current_dep_time = *split_iter;
 			} else {
+				// add trip_id to this->trips, so we can answer the profile-queries
+				// first currrent_trip is the empty string, hence the boolean
+				if (first_current_trip) this->trips.push_back(current_trip);
+
 				current_trip = *split_iter++;
 				current_dep_id = *split_iter++;
 				split_iter++;
 				current_dep_time = *split_iter;
 			}
 		}
+		
+		this->trips.push_back(current_trip);
 		file.close();
 	};
 
@@ -199,8 +209,14 @@ public:
 
 	void init() {
 		this->readStations();
+		std::cout << this->stations.size() << " stations loaded" << std::endl;
 		this->readConnections();
-		#pragma omp parallel 
+		std::cout << this->connections.size() << " connectrions loaded" << std::endl;
+		this->sortConnections();
+		assert(std::is_sorted(this->connections.begin(), this->connections.end(), [](Connection *a, Connection *b) { return (a->getDepartureTime() < b->getDepartureTime());}));
+		// this->readTransferFile();
+		/*
+		#pragma omp parallel
 		#pragma omp single
 		{
 			#pragma omp task
@@ -211,7 +227,7 @@ public:
 			{
 				this->readTransferFile();
 			}
-		}
+		}*/
 	};
 	
 	

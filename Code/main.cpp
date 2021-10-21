@@ -12,11 +12,19 @@ int main(int argc, char const *argv[]) {
     	using std::chrono::milliseconds;	
 
 	unsigned int dep_id, arr_id;
-	std::string time;
-
-	GTFS_Reader core("../s_rb_bahn");
+	std::string time = "10:00:00";
+	GTFS_Reader core("../HD_GTFS");
 	core.init();
-	std::cout << core.stations.size() << " stations & " << core.connections.size() << " connections loaded!" << std::endl;
+
+	unsigned int time_stamp = core.getTimeAsInt(time);
+	std::vector<std::array<unsigned int, 2>> result = core.earliest_arr_profile(120001, 114601, time_stamp);
+	std::vector<std::array<unsigned int, 2>>::iterator it = result.begin();
+	while ((*it)[0] < time_stamp) ++it;
+	while (it != result.end()) {
+		std::cout << "(" << (*it)[0] <<", "<<(*it)[1] << ")" << std::endl;
+		++it;
+	}
+	/*
 	std::cout << "From Station:\t";
 	std::cin >> dep_id;
 	std::cout << "\nTo Station:\t";
@@ -24,8 +32,6 @@ int main(int argc, char const *argv[]) {
 	std::cout << "\nTimestamp:\t";
 	std::cin >> time;
 	std::cout << "\n";
-	// core.csa(core.getTimeAsInt("10:00:00"), 120001, 122801);
-	// 120001 (& 120002) sind Albert-Fritz-Str, 122801 (& 122802) sind Bunsengymnasium (Mathematikon)
 	auto t1 = high_resolution_clock::now();
 	
 	std::vector<Connection*> result = core.csa_lines(core.getTimeAsInt(time), dep_id, arr_id);
@@ -38,5 +44,6 @@ int main(int argc, char const *argv[]) {
 		std::cout << *(*i) << std::endl;
 	}
 	std::cout << "Query took " << ms_double.count() << " ms!\n";
+	*/
 	return 0;
 }

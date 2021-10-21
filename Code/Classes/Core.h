@@ -8,17 +8,22 @@
 #include <vector>
 #include <unordered_map>
 #include <omp.h>
+#include <cassert>
 
 class Core
 {
 public:
 	std::vector<Connection*> connections;
 	std::vector<Station*> stations;
+	std::vector<std::string> trips;
+
 	std::unordered_map<unsigned int, Station*> station_ptr_map;
 	Core() {};
 	~Core() {};
 	
-	void addConnection(Connection *new_connection_ptr) { this->connections.push_back(new_connection_ptr);}
+	void addConnection(Connection *new_connection_ptr) {
+		this->connections.push_back(new_connection_ptr);
+	}
 
 	void addStation(Station *new_station_ptr) {
 		this->stations.push_back(new_station_ptr);
@@ -26,7 +31,10 @@ public:
 	}
 
 	void sortConnections() { 
-		std::sort(this->connections.begin(), this->connections.end(), [](Connection *a, Connection *b) { return (*a < *b);});
+		std::sort(this->connections.begin(), this->connections.end(),
+			       [](Connection *a, Connection *b) {
+					return (a->getDepartureTime() < b->getDepartureTime());
+		});
 	}
 
 	std::vector<Connection*>::iterator findFirstDep(unsigned int dep_time) {
@@ -41,13 +49,9 @@ public:
 
 		map.reserve(this->stations.size());
 
-		#pragma omp parallel
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
-			#pragma omp for
-			for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
-			{
-				map[(*i)->getID()] = infty;
-			}
+			map[(*i)->getID()] = infty;
 		}
 
 		// init departure id with time
@@ -107,13 +111,9 @@ public:
 
 		map.reserve(this->stations.size());
 
-		#pragma omp parallel
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
-			#pragma omp for
-			for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
-			{
-				map[(*i)->getID()] = new Connection();
-			}
+			map[(*i)->getID()] = new Connection();
 		}
 
 		map[from_id] = new Connection(this->station_ptr_map[from_id], this->station_ptr_map[from_id], time, time);
@@ -162,6 +162,69 @@ public:
 		std::reverse(result.begin(), result.end());
 		return result;
 	};
+
+	std::vector<std::array<unsigned int, 2>> earliest_arr_profile(unsigned int from_id, unsigned int to_id, unsigned int timestamp) {
+		// csa_overview - Page 15 ff.
+		unsigned int infty = (~0);
+
+		std::unordered_map<std::string, unsigned int> T;
+		// Profile <=> int [2] = {dep_time, arr_time}
+		std::unordered_map<unsigned int, std::vector<std::array<unsigned int, 2>>> S;
+		
+		// init T & S
+		for (std::vector<std::string>::iterator i = this->trips.begin(); i != this->trips.end(); ++i)
+		{
+			T[(*i)] = infty;
+		}
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		{
+			S[(*i)->getID()].push_back({infty, infty});
+		}
+
+		unsigned int t1, t2, t3, t_c, c_arr_time;
+		for (std::vector<Connection*>::reverse_iterator i = this->connections.rbegin(); i != this->connections.rend(); ++i ) {
+			t1 = infty;
+			t3 = infty;
+			c_arr_time = (*i)->getArrivalTime();
+
+			if ((*i)->getArrivalID() == to_id) t1 = c_arr_time;
+			t2 = T[(*i)->getTripID()];
+
+			std::vector<std::array<unsigned int, 2>>::iterator profile_itr = S[(*i)->getArrivalID()].begin();
+
+			while ((*profile_itr)[0] < c_arr_time) profile_itr++;
+			t3 = (*profile_itr)[1];
+
+			t_c = std::min({t1, t2, t3});
+
+			std::array<unsigned int, 2> p = {{(*i)->getDepartureTime(), t_c}};
+			std::vector<std::array<unsigned int, 2>>::iterator q = S[(*i)->getDepartureID()].begin();
+			if (p[0] <= (*q)[0] && p[1] <= (*q)[1]) {
+				if (p[0] != (*q)[0]) {
+					S[(*i)->getDepartureID()].insert(q, p);
+				} else {
+					(*q)[1] = p[1];
+				}
+			}
+			T[(*i)->getTripID()] = t_c;
+		}
+		
+		return S[from_id];	
+		/*
+		for (std::vector<std::string>::iterator i = this->trips.begin(); i != this->trips.end(); ++i)
+                {
+			if (T[(*i)] < infty)
+				std::cout << (*i) << ": " <<  T[(*i)] << std::endl;
+                }
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+                {
+			std::cout << (*i)->getID() << " " << (*i)->getName() << std::endl;
+			for (std::vector<std::array<unsigned int, 2>>::iterator j = S[(*i)->getID()].begin(); j != S[(*i)->getID()].end(); ++j)
+				std::cout << "(" << (*j)[0] << ", " << (*j)[1] << ") ";
+			std::cout << std::endl;
+                }*/
+
+	}
 };
 
 #endif
