@@ -38,7 +38,11 @@ public:
 	}
 
 	std::vector<Connection*>::iterator findFirstDep(unsigned int dep_time) {
-		return std::lower_bound(this->connections.begin(), this->connections.end(), dep_time, [](Connection *a, unsigned int time) { return (*a < time); });
+		return std::lower_bound(this->connections.begin(), this->connections.end(), dep_time, [](Connection *a, unsigned int time) { return (a->getDepartureTime() < time); });
+	}
+	
+	std::vector<Connection*>::iterator findLastDep(unsigned int dep_time) {
+		return std::upper_bound(this->connections.begin(), this->connections.end(), dep_time, [](unsigned int time, Connection *a) { return (time < a->getDepartureTime()); });
 	}
 
 	void csa(unsigned int time, unsigned int from_id, unsigned int to_id) {
@@ -163,7 +167,24 @@ public:
 		return result;
 	};
 
-	std::vector<std::array<unsigned int, 2>> earliest_arr_profile(unsigned int from_id, unsigned int to_id, unsigned int timestamp) {
+
+	std::vector<std::array<unsigned int, 2>> latest_dep_prof(unsigned int from_id, unsigned int to_id, unsigned int timestamp, int counter_prof=5) {
+		// timestamp describes latest_arr_time
+		std::vector<std::array<unsigned int, 2>> result_profile = this->earliest_arr_profile(from_id, to_id, timestamp);
+		// find timestamp in the vector
+		// since the vector isnt that big, linear scan is faster bcs it fits in memory
+		std::vector<std::array<unsigned int, 2>> result;
+		result.reserve(counter_prof);
+		auto it = result_profile.rbegin();
+		while (it != result_profile.rend() && result.size() < counter_prof) {
+			if ((*it)[1] <= timestamp) result.push_back(*it);
+			++it;
+		}
+		return result;
+	}
+
+	std::vector<std::array<unsigned int, 2>> earliest_arr_profile(unsigned int from_id, unsigned int to_id, unsigned int upper_bound=(~0)) {
+		// upper_bound is used as latest departure time
 		// csa_overview - Page 15 ff.
 		unsigned int infty = (~0);
 
@@ -182,7 +203,13 @@ public:
 		}
 
 		unsigned int t1, t2, t3, t_c, c_arr_time;
-		for (std::vector<Connection*>::reverse_iterator i = this->connections.rbegin(); i != this->connections.rend(); ++i ) {
+		std::vector<Connection*>::reverse_iterator i;
+		if (upper_bound != infty) {
+			i = std::make_reverse_iterator(this->findLastDep(upper_bound));
+		} else {
+			i = this->connections.rbegin();
+		}
+		for (; i != this->connections.rend(); ++i ) {
 			t1 = infty;
 			t3 = infty;
 			c_arr_time = (*i)->getArrivalTime();

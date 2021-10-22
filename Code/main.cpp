@@ -6,23 +6,21 @@
 #include <chrono>
 
 int main(int argc, char const *argv[]) {
+	/*
 	using std::chrono::high_resolution_clock;
     	using std::chrono::duration_cast;
     	using std::chrono::duration;
     	using std::chrono::milliseconds;	
+	*/
 
-	unsigned int dep_id, arr_id;
 	std::string time = "10:00:00";
 	GTFS_Reader core("../HD_GTFS");
 	core.init();
-
+	 
 	unsigned int time_stamp = core.getTimeAsInt(time);
-	std::vector<std::array<unsigned int, 2>> result = core.earliest_arr_profile(120001, 114601, time_stamp);
-	std::vector<std::array<unsigned int, 2>>::iterator it = result.begin();
-	while ((*it)[0] < time_stamp) ++it;
-	while (it != result.end()) {
-		std::cout << "(" << (*it)[0] <<", "<<(*it)[1] << ")" << std::endl;
-		++it;
+	std::vector<std::array<unsigned int, 2>> result = core.latest_dep_prof(120001, 122802, time_stamp);
+	for (auto i = result.begin(); i != result.end(); ++i) {
+		std::cout << (*i)[0] << ", " << (*i)[1] << "\n";
 	}
 	/*
 	std::cout << "From Station:\t";
