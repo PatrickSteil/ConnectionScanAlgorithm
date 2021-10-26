@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
+#include "../sparsehash/src/sparsehash/dense_hash_map"
+using namespace google;
 #include <omp.h>
 #include <cassert>
 
@@ -16,8 +18,9 @@ public:
 	std::vector<Connection*> connections;
 	std::vector<Station*> stations;
 	std::vector<std::string> trips;
-
-	std::unordered_map<unsigned int, Station*> station_ptr_map;
+	
+	dense_hash_map<unsigned int, Station*> station_ptr_map;
+	// std::unordered_map<unsigned int, Station*> station_ptr_map;
 	Core() {};
 	~Core() {};
 	
@@ -40,18 +43,22 @@ public:
 	std::vector<Connection*>::iterator findFirstDep(unsigned int dep_time) {
 		return std::lower_bound(this->connections.begin(), this->connections.end(), dep_time, [](Connection *a, unsigned int time) { return (a->getDepartureTime() < time); });
 	}
+	std::vector<Connection*>::iterator findFirstDep(unsigned int dep_time, std::vector<Connection*>::iterator lower_itr, std::vector<Connection*>::iterator upper_itr) {
+		return std::lower_bound(lower_itr, upper_itr, dep_time, [](Connection *a, unsigned int time) { return (a->getDepartureTime() < time); });
+	}
 	
 	std::vector<Connection*>::iterator findLastDep(unsigned int dep_time) {
 		return std::upper_bound(this->connections.begin(), this->connections.end(), dep_time, [](unsigned int time, Connection *a) { return (time < a->getDepartureTime()); });
+	}
+	std::vector<Connection*>::iterator findLastDep(unsigned int dep_time, std::vector<Connection*>::iterator lower_itr, std::vector<Connection*>::iterator upper_itr) {
+		return std::upper_bound(lower_itr, upper_itr, dep_time, [](unsigned int time, Connection *a) { return (time < a->getDepartureTime()); });
 	}
 
 	void csa(unsigned int time, unsigned int from_id, unsigned int to_id) {
 		unsigned int infty = (~0);
 
-		// https://stackoverflow.com/a/3578247
-		std::unordered_map<unsigned int, unsigned int> map;
-
-		map.reserve(this->stations.size());
+		dense_hash_map<unsigned int, unsigned int> map(this->stations.size());
+		map.set_empty_key(~0);
 
 		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
@@ -99,7 +106,7 @@ public:
 			conn_itr++;
 		}
 		// print the map
-		for(auto it = map.cbegin(); it != map.cend(); ++it)
+		for(auto it = map.begin(); it != map.end(); ++it)
 		{
 			if (it->second != infty)
 				std::cout << it->first << ": " << it->second << "\n";
@@ -110,10 +117,8 @@ public:
 	std::vector<Connection*> csa_lines(unsigned int time, unsigned int from_id, unsigned int to_id) {
 		unsigned int infty = (~0);
 
-		// https://stackoverflow.com/a/3578247
-		std::unordered_map<unsigned int, Connection*> map;
-
-		map.reserve(this->stations.size());
+		dense_hash_map<unsigned int, Connection*> map(this->stations.size());
+		map.set_empty_key(~0);
 
 		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
@@ -168,48 +173,57 @@ public:
 	};
 
 
-	std::vector<std::array<unsigned int, 2>> latest_dep_prof(unsigned int from_id, unsigned int to_id, unsigned int timestamp, int counter_prof=5) {
-		// timestamp describes latest_arr_time
-		std::vector<std::array<unsigned int, 2>> result_profile = this->earliest_arr_profile(from_id, to_id, timestamp);
+	std::vector<std::array<unsigned int, 2>> latest_dep_prof(unsigned int from_id, unsigned int to_id, unsigned int earliest_dep, unsigned int latest_arr, int counter_prof=5) {
+		// earliest_dep is the **now** time, since the user cannot catch an earlier train
+		// latest_arr is the latest arrival time
+		std::vector<std::array<unsigned int, 2>> profile = this->earliest_arr_profile(from_id, to_id, earliest_dep, latest_arr);
 		// find timestamp in the vector
 		// since the vector isnt that big, linear scan is faster bcs it fits in memory
 		std::vector<std::array<unsigned int, 2>> result;
 		result.reserve(counter_prof);
-		auto it = result_profile.rbegin();
-		while (it != result_profile.rend() && result.size() < counter_prof) {
-			if ((*it)[1] <= timestamp) result.push_back(*it);
+		auto it = profile.rbegin();
+		while (it != profile.rend() && result.size() < (unsigned int) counter_prof) {
+			if ((*it)[1] <= latest_arr) result.push_back(*it);
 			++it;
 		}
 		return result;
 	}
 
-	std::vector<std::array<unsigned int, 2>> earliest_arr_profile(unsigned int from_id, unsigned int to_id, unsigned int upper_bound=(~0)) {
+	std::vector<std::array<unsigned int, 2>> earliest_arr_profile(unsigned int from_id, unsigned int to_id, unsigned int lower_bound = 0, unsigned int upper_bound=(~0)) {
 		// upper_bound is used as latest departure time
 		// csa_overview - Page 15 ff.
 		unsigned int infty = (~0);
 
-		std::unordered_map<std::string, unsigned int> T;
+		dense_hash_map<std::string, unsigned int> T(this->trips.size());
+		T.set_empty_key("");
 		// Profile <=> int [2] = {dep_time, arr_time}
-		std::unordered_map<unsigned int, std::vector<std::array<unsigned int, 2>>> S;
+		dense_hash_map<unsigned int, std::vector<std::array<unsigned int, 2>>> S(this->stations.size());
+		S.set_empty_key(~0);
 		
 		// init T & S
 		for (std::vector<std::string>::iterator i = this->trips.begin(); i != this->trips.end(); ++i)
 		{
 			T[(*i)] = infty;
 		}
+
 		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
 		{
-			S[(*i)->getID()].push_back({infty, infty});
+			S[(*i)->getID()]= {{infty, infty}};
 		}
 
 		unsigned int t1, t2, t3, t_c, c_arr_time;
-		std::vector<Connection*>::reverse_iterator i;
-		if (upper_bound != infty) {
-			i = std::make_reverse_iterator(this->findLastDep(upper_bound));
-		} else {
-			i = this->connections.rbegin();
-		}
-		for (; i != this->connections.rend(); ++i ) {
+		std::vector<Connection*>::reverse_iterator i, j;
+		std::vector<Connection*>::iterator i_forward;
+
+		// limit the scannable connections
+		if (upper_bound != infty) i_forward = this->findLastDep(upper_bound);
+		else i_forward = this->connections.end();
+		i = std::make_reverse_iterator(i_forward);
+		if (lower_bound != 0) j = std::make_reverse_iterator(this->findFirstDep(lower_bound, this->connections.begin(), i_forward));
+		else j = this->connections.rend();
+
+		// algorithm starts here
+		for (; i != j; ++i ) {
 			t1 = infty;
 			t3 = infty;
 			c_arr_time = (*i)->getArrivalTime();
@@ -235,8 +249,7 @@ public:
 			}
 			T[(*i)->getTripID()] = t_c;
 		}
-		
-		return S[from_id];	
+		return S[from_id];
 		/*
 		for (std::vector<std::string>::iterator i = this->trips.begin(); i != this->trips.end(); ++i)
                 {

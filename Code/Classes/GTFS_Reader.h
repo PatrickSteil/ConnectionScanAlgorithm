@@ -23,6 +23,10 @@ using namespace nanoflann;
 #include <string>
 #include <vector>
 #include <unordered_map>
+
+#include "../sparsehash/src/sparsehash/dense_hash_map"
+using namespace google;
+
 // Parallel-stuff
 #include <omp.h>
 
@@ -48,8 +52,10 @@ private:
 
 	void readStations() {
 		unsigned int number_of_stations = this->getNumberOfLinesInFile("stops.txt");
-		// this->stations.reserve(number_of_stations);
+		this->stations.reserve(number_of_stations);
 		// this->station_ptr_map.reserve(number_of_stations);
+		this->station_ptr_map = dense_hash_map<unsigned int, Station*>(number_of_stations);
+		this->station_ptr_map.set_empty_key(~0);
 
 		std::string current_str;
 		std::vector<std::string>::iterator split_iter;	// "splitter" wäre ein cooler Name :D
@@ -197,7 +203,7 @@ private:
 
 		#pragma omp parallel
 		#pragma omp for
-		for (int i = 0; i < this->stations.size(); ++i) {
+		for (size_t i = 0; i < this->stations.size(); ++i) {
 			this->cloud.pts[i].x = this->stations[i]->getLatAsFloat();
 			this->cloud.pts[i].y = this->stations[i]->getLonAsFloat();
 		}
@@ -211,10 +217,9 @@ public:
 		this->readStations();
 		std::cout << this->stations.size() << " stations loaded" << std::endl;
 		this->readConnections();
-		std::cout << this->connections.size() << " connectrions loaded" << std::endl;
+		std::cout << this->connections.size() << " connections loaded" << std::endl;
 		this->sortConnections();
-		assert(std::is_sorted(this->connections.begin(), this->connections.end(), [](Connection *a, Connection *b) { return (a->getDepartureTime() < b->getDepartureTime());}));
-		// this->readTransferFile();
+		this->readTransferFile();
 		/*
 		#pragma omp parallel
 		#pragma omp single

@@ -24,6 +24,9 @@ Wird auch im Paper "Connection Scan Accerlerated" wie folgt erläutert:
 
 It [GTFS] only allows for footpaths between two stops (...) Many feeds model large train stations not as a single stop but each railway platform inside the station as individual stop and connect the platforms using footpaths.
 
+# Fehler in Quellen
+
+Im csa\_overview [https://arxiv.org/pdf/1703.05997v1.pdf] steht auf Seite 20 "Further, τc[3] is 10 because the journey s@6 -> x -> y -> t@11 with 3 legs exists". It should update τc[3] to 11, the error is repeated on the bottom of the page "The resulting profile has the value {(6, (∞, 12, 10 [11])), (7, (∞, 12, 12)), (∞, (∞, ∞, ∞))}"
 # Quellen
 
 - https://i11www.iti.kit.edu/_media/teaching/sommer2014/routenplanung/vorlesung4.pdf

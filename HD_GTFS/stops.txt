@@ -24,11 +24,12 @@ stop_id,stop_name,stop_lat,stop_lon,location_type,platform_code
 114122,HD Bergfriedhof,49.3956531,8.6898531,0,n/a
 114321,Bethanienkrankenhaus,49.392595,8.6902211,0,n/a
 114322,Bethanienkrankenhaus,49.3921211,8.6902119,0,n/a
-114421,HD Betriebshof,49.4078939,8.6764589,0,n/a
-114422,HD Betriebshof,49.4079581,8.6755519,0,n/a
-114423,HD Betriebshof,49.4078939,8.6764589,0,n/a
-114424,HD Betriebshof,49.4074261,8.67468,0,n/a
-114425,HD Betriebshof,49.4079581,8.6755519,0,n/a
+114411,HD Betriebshof,49.4076069,8.674725,0,C
+114421,HD Betriebshof,49.4078881,8.6764589,0,A
+114422,HD Betriebshof,49.4079231,8.6755431,0,B
+114423,HD Betriebshof,49.4075611,8.6745189,0,E
+114424,HD Betriebshof,49.4075139,8.6748331,0,D
+114426,HD Betriebshof,49.4072389,8.6748331,0,F
 114601,Bismarckplatz,49.4098639,8.693195,0,A
 114602,Bismarckplatz,49.4094489,8.6929789,0,B
 114901,Rudolf-Diesel-Straße,49.3968811,8.6790639,0,B
