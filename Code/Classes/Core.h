@@ -18,10 +18,13 @@ public:
 	std::vector<Connection*> connections;
 	std::vector<Station*> stations;
 	std::vector<std::string> trips;
+	dense_hash_map<unsigned int, unsigned int> D; 	// used in profile
 	
 	dense_hash_map<unsigned int, Station*> station_ptr_map;
 	// std::unordered_map<unsigned int, Station*> station_ptr_map;
-	Core() {};
+	Core() {
+		D.set_empty_key(~0);
+	};
 	~Core() {};
 	
 	void addConnection(Connection *new_connection_ptr) {
@@ -31,6 +34,7 @@ public:
 	void addStation(Station *new_station_ptr) {
 		this->stations.push_back(new_station_ptr);
 		this->station_ptr_map[new_station_ptr->getID()] = new_station_ptr;
+		this->D[new_station_ptr->getID()] = (~0);
 	}
 
 	void sortConnections() { 
@@ -176,7 +180,7 @@ public:
 	std::vector<std::array<unsigned int, 2>> latest_dep_prof(unsigned int from_id, unsigned int to_id, unsigned int earliest_dep, unsigned int latest_arr, int counter_prof=5) {
 		// earliest_dep is the **now** time, since the user cannot catch an earlier train
 		// latest_arr is the latest arrival time
-		std::vector<std::array<unsigned int, 2>> profile = this->earliest_arr_profile(from_id, to_id, earliest_dep, latest_arr);
+		std::vector<std::array<unsigned int, 2>> profile = this->earliest_arr_profile_walking(from_id, to_id, earliest_dep, latest_arr);
 		// find timestamp in the vector
 		// since the vector isnt that big, linear scan is faster bcs it fits in memory
 		std::vector<std::array<unsigned int, 2>> result;
@@ -250,20 +254,102 @@ public:
 			T[(*i)->getTripID()] = t_c;
 		}
 		return S[from_id];
-		/*
-		for (std::vector<std::string>::iterator i = this->trips.begin(); i != this->trips.end(); ++i)
-                {
-			if (T[(*i)] < infty)
-				std::cout << (*i) << ": " <<  T[(*i)] << std::endl;
-                }
-		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
-                {
-			std::cout << (*i)->getID() << " " << (*i)->getName() << std::endl;
-			for (std::vector<std::array<unsigned int, 2>>::iterator j = S[(*i)->getID()].begin(); j != S[(*i)->getID()].end(); ++j)
-				std::cout << "(" << (*j)[0] << ", " << (*j)[1] << ") ";
-			std::cout << std::endl;
-                }*/
+	}
 
+
+	std::vector<std::array<unsigned int, 2>> earliest_arr_profile_walking(unsigned int from_id, unsigned int to_id, unsigned int lower_bound = 0, unsigned int upper_bound=(~0)) {
+		// upper_bound is used as latest departure time
+		// csa_overview - Page 15 ff.
+		unsigned int infty = (~0);
+
+		std::vector<Transfer*> transfers = (*this->station_ptr_map[to_id]->getTransfers());
+		for (auto transfer = transfers.begin(); transfer != transfers.end(); ++transfer) {
+			this->D[(*transfer)->getArrivalID()] = (*transfer)->getDuration();
+		}
+
+		this->D[to_id] = 0;
+
+		dense_hash_map<std::string, unsigned int> T(this->trips.size());
+		T.set_empty_key("");
+		// Profile <=> int [2] = {dep_time, arr_time}
+		dense_hash_map<unsigned int, std::vector<std::array<unsigned int, 2>>> S(this->stations.size());
+		S.set_empty_key(~0);
+		
+		// init T & S
+		for (std::vector<std::string>::iterator i = this->trips.begin(); i != this->trips.end(); ++i)
+		{
+			T[(*i)] = infty;
+		}
+
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		{
+			S[(*i)->getID()]= {{infty, infty}};
+		}
+
+		unsigned int t1, t2, t3, t_c, c_arr_time, c_arr_id, c_dep_id;
+		std::vector<Connection*>::reverse_iterator i, j;
+		std::vector<Connection*>::iterator i_forward;
+
+		// limit the scannable connections
+		if (upper_bound != infty) i_forward = this->findLastDep(upper_bound);
+		else i_forward = this->connections.end();
+		i = std::make_reverse_iterator(i_forward);
+		if (lower_bound != 0) j = std::make_reverse_iterator(this->findFirstDep(lower_bound, this->connections.begin(), i_forward));
+		else j = this->connections.rend();
+
+		// init stuff for the algorithm
+		std::array<unsigned int, 2> p, p_update; 
+		std::vector<std::array<unsigned int, 2>>::iterator q, transf_q, profile_itr;
+		std::vector<Transfer*> c_footpath;
+		// algorithm starts here
+		for (; i != j; ++i ) {
+			c_arr_time = (*i)->getArrivalTime();
+			c_arr_id = (*i)->getArrivalID();
+			c_dep_id = (*i)->getDepartureID();
+			if (this->D[c_arr_id] != infty) {
+				t1 = c_arr_time + this->D[c_arr_id];
+			} else {
+				t1 = infty;
+			}
+			t2 = T[(*i)->getTripID()];
+			t3 = infty;
+
+			profile_itr = S[c_arr_id].begin();
+
+			while ((*profile_itr)[0] < c_arr_time) profile_itr++;
+			t3 = (*profile_itr)[1];
+
+			t_c = std::min({t1, t2, t3});
+
+			p = {{(*i)->getDepartureTime(), t_c}};
+			q = S[c_dep_id].begin();
+			if (p[0] <= (*q)[0] && p[1] <= (*q)[1]) {
+				if (p[0] != (*q)[0]) {
+					S[(*i)->getDepartureID()].insert(q, p);
+				} else {
+					(*q)[1] = p[1];
+				}
+
+				c_footpath = (*this->station_ptr_map[c_dep_id]->getTransfers());
+				for (auto transfer = c_footpath.begin(); transfer != c_footpath.end(); ++transfer) {
+					transf_q = S[(*transfer)->getArrivalID()].begin();
+					p_update = {{p[0]-(*transfer)->getDuration(), p[1]}};
+					if (p_update[0] != (*transf_q)[0]) {
+						S[(*transfer)->getArrivalID()].insert(transf_q, p_update);
+					} else {
+						(*transf_q)[1] = p_update[1];
+					}
+				}
+			}
+			T[(*i)->getTripID()] = t_c;
+		}
+		// reset D
+		for (auto transfer = transfers.begin(); transfer != transfers.end(); ++transfer) {
+			this->D[(*transfer)->getArrivalID()] = infty;
+		}
+
+		this->D[to_id] = infty;
+		return S[from_id];
 	}
 };
 
