@@ -28,27 +28,26 @@ int main(int argc, char const *argv[]) {
 
 	auto t1 = high_resolution_clock::now();
 
-	std::vector<std::array<unsigned int, 2>> result = core.latest_dep_prof(dep_id, arr_id, core.getTimeAsInt(start_time), core.getTimeAsInt(latest_arr), 10);
+	std::vector<Connection*> result = core.earliest_arr_profile_journey_extraction(dep_id, arr_id, core.getTimeAsInt(start_time), core.getTimeAsInt(latest_arr), 1);
 
 	auto t2 = high_resolution_clock::now();
 	
-	for (auto i = result.begin(); i != result.end(); ++i) {
-		std::cout << (*i)[0] << "\t" << (*i)[1] << "\n";
-	}
-	duration<double, std::milli> ms_double = t2 - t1;
-	/*
-	auto t1 = high_resolution_clock::now();
+	// for (auto i = result.begin(); i != result.end(); ++i) {
+	//         std::cout << (*i).dep_time << "\t" << (*i).arr_time;
+	//         if ((*i).l_enter != nullptr)
+	//                 std::cout << "\t" << (*(*i).l_enter) << std::endl;
+	//         if ((*i).l_exit != nullptr)
+	//                 std::cout << "\t" << (*(*i).l_exit) << std::endl;
+	//         else
+	//                 std::cout << std::endl;
+	// }
 	
-	std::vector<Connection*> result = core.csa_lines(core.getTimeAsInt(time), dep_id, arr_id);
-	
-	auto t2 = high_resolution_clock::now();
 	duration<double, std::milli> ms_double = t2 - t1;
 
 	for (std::vector<Connection*>::iterator i = result.begin(); i != result.end(); ++i)
 	{
 		std::cout << *(*i) << std::endl;
 	}
-	*/
 	std::cout << "Query took " << ms_double.count() << " ms!\n";
 	return 0;
 }

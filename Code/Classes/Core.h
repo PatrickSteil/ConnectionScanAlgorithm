@@ -6,14 +6,69 @@
 #include "Transfer.h"
 #include <algorithm>
 #include <vector>
+#include <list>
 #include <unordered_map>
 #include "../sparsehash/src/sparsehash/dense_hash_map"
 using namespace google;
 #include <omp.h>
 #include <cassert>
 
+struct profile_array {
+	unsigned int dep_time;
+	unsigned int arr_time;
+	Connection *l_enter;
+	Connection *l_exit;
+};
+
+struct trip_profile {
+	unsigned int time;
+	Connection *connection;
+};
+
 class Core
 {
+private:
+	bool incorperateIntoList(struct profile_array new_prof, std::list<struct profile_array> &liste) {
+		// 1. find position to insert
+		// 2. check if there is not already on profile with same dep_time but better arr_time
+		// 3. loop back to beginning and check if we can throw some profiles away
+		std::list<struct profile_array>::iterator itr = liste.begin();
+		
+		while ((*itr).dep_time < new_prof.dep_time && itr != liste.end()) ++itr;
+		// insert element
+		liste.insert(itr, new_prof);
+
+		// check if same dep time in next position and check who is better
+		if ((*itr).dep_time == new_prof.dep_time) {
+			if ((*itr).arr_time <= new_prof.arr_time) {
+				// delete new_profile, hence not inserted
+				itr = liste.erase(--itr);
+				return false;
+			} else {
+				itr = liste.erase(itr);
+			}
+		}
+		--itr;
+		// I - optimal, so just add it and it's all good
+		if ((*itr).dep_time > new_prof.dep_time && (*itr).arr_time > new_prof.arr_time && (*(std::prev(itr))).arr_time < new_prof.arr_time) {
+			// all done, just return true
+			return true;
+		}
+
+		// II - update the profile before
+		while (itr != liste.begin() && (*(std::prev(itr))).arr_time >= new_prof.arr_time) {
+			itr = liste.erase(--itr);
+		}
+
+		// III - where the new_profile is worse than the next 
+		if ((*(std::next(itr))).dep_time != (unsigned int) (~0) && (*(std::next(itr))).dep_time >= new_prof.dep_time && (*(std::next(itr))).arr_time <= new_prof.arr_time) {
+			(*(std::next(itr))).dep_time = new_prof.dep_time;
+			itr = liste.erase(itr);
+			return false;
+		}
+		return true;
+	}
+
 public:
 	std::vector<Connection*> connections;
 	std::vector<Station*> stations;
@@ -322,6 +377,9 @@ public:
 			t_c = std::min({t1, t2, t3});
 
 			p = {{(*i)->getDepartureTime(), t_c}};
+
+
+			// i need a different domination test, since the invariant, that there are no earlier departures in the profile is false
 			q = S[c_dep_id].begin();
 			if (p[0] <= (*q)[0] && p[1] <= (*q)[1]) {
 				if (p[0] != (*q)[0]) {
@@ -330,16 +388,16 @@ public:
 					(*q)[1] = p[1];
 				}
 
-				c_footpath = (*this->station_ptr_map[c_dep_id]->getTransfers());
-				for (auto transfer = c_footpath.begin(); transfer != c_footpath.end(); ++transfer) {
-					transf_q = S[(*transfer)->getArrivalID()].begin();
-					p_update = {{p[0]-(*transfer)->getDuration(), p[1]}};
-					if (p_update[0] != (*transf_q)[0]) {
-						S[(*transfer)->getArrivalID()].insert(transf_q, p_update);
-					} else {
-						(*transf_q)[1] = p_update[1];
-					}
-				}
+				// c_footpath = (*this->station_ptr_map[c_dep_id]->getTransfers());
+				// for (auto transfer = c_footpath.begin(); transfer != c_footpath.end(); ++transfer) {
+				//         transf_q = S[(*transfer)->getArrivalID()].begin();
+				//         p_update = {{p[0]-(*transfer)->getDuration(), p[1]}};
+				//         if (p_update[0] != (*transf_q)[0]) {
+				//                 S[(*transfer)->getArrivalID()].insert(transf_q, p_update);
+				//         } else {
+				//                 (*transf_q)[1] = p_update[1];
+				//         }
+				// }
 			}
 			T[(*i)->getTripID()] = t_c;
 		}
@@ -351,6 +409,128 @@ public:
 		this->D[to_id] = infty;
 		return S[from_id];
 	}
+	std::vector<Connection*> earliest_arr_profile_journey_extraction(unsigned int from_id, unsigned int to_id, unsigned int lower_bound = 0, unsigned int upper_bound=(~0), int profile_counter=5) {
+		// upper_bound is used as latest departure time
+		// csa_overview - Page 15 ff.
+		unsigned int infty = (~0);
+
+		std::vector<Transfer*> transfers = (*this->station_ptr_map[to_id]->getTransfers());
+		for (auto transfer = transfers.begin(); transfer != transfers.end(); ++transfer) {
+			this->D[(*transfer)->getArrivalID()] = (*transfer)->getDuration();
+		}
+
+		this->D[to_id] = 0;
+
+		dense_hash_map<std::string, trip_profile> T(this->trips.size());
+		T.set_empty_key("");
+		// Profile <=> struct profile_array dep_time, arr_time, Connection *l_enter, Connection *l_exit
+		dense_hash_map<unsigned int, std::list<struct profile_array>> S(this->stations.size());
+		S.set_empty_key(~0);
+		
+		// init T & S
+		for (std::vector<std::string>::iterator i = this->trips.begin(); i != this->trips.end(); ++i)
+		{
+			T[(*i)] = {infty, nullptr};
+		}
+
+		for (std::vector<Station*>::iterator i = this->stations.begin(); i != this->stations.end(); ++i)
+		{
+			S[(*i)->getID()] = {{infty, infty, nullptr, nullptr}}; 
+		}
+
+		unsigned int t1, t2, t3, t_c, c_arr_time, c_arr_id, c_dep_id;
+		std::vector<Connection*>::reverse_iterator i, j;
+		std::vector<Connection*>::iterator i_forward;
+
+		// limit the scannable connections
+		if (upper_bound != infty) i_forward = this->findLastDep(upper_bound);
+		else i_forward = this->connections.end();
+		i = std::make_reverse_iterator(i_forward);
+		if (lower_bound != 0) j = std::make_reverse_iterator(this->findFirstDep(lower_bound, this->connections.begin(), i_forward));
+		else j = this->connections.rend();
+
+		// init stuff for the algorithm
+		struct profile_array p, p_update; 
+		std::list<struct profile_array>::iterator q, transf_q, profile_itr;
+		std::vector<Transfer*> c_footpath;
+		// algorithm starts here
+		for (; i != j; ++i ) {
+			c_arr_time = (*i)->getArrivalTime();
+			if (c_arr_time > upper_bound) continue;
+			c_arr_id = (*i)->getArrivalID();
+			c_dep_id = (*i)->getDepartureID();
+			if (this->D[c_arr_id] != infty) {
+				t1 = c_arr_time + this->D[c_arr_id];
+			} else {
+				t1 = infty;
+			}
+			t2 = T[(*i)->getTripID()].time;
+			t3 = infty;
+
+			profile_itr = S[c_arr_id].begin();
+
+			while ((*profile_itr).dep_time < c_arr_time) profile_itr++;
+			t3 = (*profile_itr).arr_time;
+
+			t_c = std::min({t1, t2, t3});
+
+			// Update Trip Info if necessary
+			if (T[(*i)->getTripID()].time > t_c) {
+				T[(*i)->getTripID()].connection = *i;
+			}
+			T[(*i)->getTripID()].time = t_c;
+
+			// check if t_c == t1 and this->D[c_arr_id] != infty (taking the connection and then walking)
+			// then add the footpath as exit connection
+			p = {(*i)->getDepartureTime(), t_c, (*i), T[(*i)->getTripID()].connection};
+
+			bool is_inserted = this->incorperateIntoList(p, S[c_dep_id]);
+			if (is_inserted) {
+				c_footpath = (*this->station_ptr_map[c_dep_id]->getTransfers());
+				Connection *footpath;
+				for (auto transfer = c_footpath.begin(); transfer != c_footpath.end(); ++transfer) {
+					footpath = new Connection(this->station_ptr_map[(*transfer)->getArrivalID()], this->station_ptr_map[(*transfer)->getDepartureID()], p.dep_time-(*transfer)->getDuration(), p.dep_time, "Walking from " + std::to_string((*transfer)->getArrivalID()) + " to " + std::to_string((*transfer)->getDepartureID()));
+				        p_update = {footpath->getDepartureTime(), p.arr_time, footpath, footpath};
+					
+					this->incorperateIntoList(p_update, S[(*transfer)->getArrivalID()]);
+				}
+			}
+		}
+		std::vector<Connection*> result = {};
+		// result.reserve(profile_counter);
+		unsigned int current_id = from_id;
+		unsigned int current_arr_time = S[from_id].front().arr_time;
+		std::list<struct profile_array>::iterator current_it;
+		int maxcounter = 0;
+		while (current_id != to_id && maxcounter < 10) {
+			current_it = S[current_id].begin();
+			while (current_it != S[current_id].end() && (*current_it).arr_time != current_arr_time && this->D[current_id] == infty) {
+				// std::cout << (*current_it).dep_time << "\t" << (*current_it).arr_time;
+				// if ((*current_it).l_enter != nullptr) std::cout << "\n" << (*(*current_it).l_enter);
+				// if ((*current_it).l_exit != nullptr) std::cout << "\n" << (*(*current_it).l_exit);
+				// std::cout << "\n";
+				++current_it;
+			}
+			if (this->D[current_id] != infty) {
+				result.push_back(new Connection(this->station_ptr_map[current_id], this->station_ptr_map[to_id], current_arr_time - this->D[current_id], current_arr_time, "Final Walk to Endstation"));
+				break;
+			}
+			result.push_back((*current_it).l_enter);
+			if ((*current_it).l_enter != (*current_it).l_exit) result.push_back((*current_it).l_exit);
+			current_id = (*current_it).l_exit->getArrivalID();
+			maxcounter++;
+		}
+		// reset D
+		for (auto transfer = transfers.begin(); transfer != transfers.end(); ++transfer) {
+			this->D[(*transfer)->getArrivalID()] = infty;
+		}
+
+		this->D[to_id] = infty;
+
+
+		return result;
+	}
+
 };
 
 #endif
