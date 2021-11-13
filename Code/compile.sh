@@ -1,5 +1,5 @@
 #!/bin/bash
 
 echo "Compiling ..."
-g++ -Wall -fopenmp main.cpp -o main
+g++ -fopenmp main.cpp -o main -O3 -Wall
 echo "Done!"

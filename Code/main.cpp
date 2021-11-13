@@ -28,7 +28,7 @@ int main(int argc, char const *argv[]) {
 
 	auto t1 = high_resolution_clock::now();
 
-	std::vector<Connection*> result = core.earliest_arr_profile_journey_extraction(dep_id, arr_id, core.getTimeAsInt(start_time), core.getTimeAsInt(latest_arr), 1);
+	std::vector<std::vector<Connection*>> result = core.earliest_arr_profile_journey_extraction_leg_opt(dep_id, arr_id, core.getTimeAsInt(start_time), core.getTimeAsInt(latest_arr));
 
 	auto t2 = high_resolution_clock::now();
 	
@@ -44,9 +44,12 @@ int main(int argc, char const *argv[]) {
 	
 	duration<double, std::milli> ms_double = t2 - t1;
 
-	for (std::vector<Connection*>::iterator i = result.begin(); i != result.end(); ++i)
-	{
-		std::cout << *(*i) << std::endl;
+	for (unsigned int j = 0; j < result.size(); j++) {
+		std::cout << "Profile " << (j+1) << ":\n";
+		for (std::vector<Connection*>::iterator i = result[j].begin(); i != result[j].end(); ++i)
+		{
+			std::cout << *(*i) << std::endl;
+		}
 	}
 	std::cout << "Query took " << ms_double.count() << " ms!\n";
 	return 0;
