@@ -32,24 +32,14 @@ int main(int argc, char const *argv[]) {
 
 	auto t2 = high_resolution_clock::now();
 	
-	// for (auto i = result.begin(); i != result.end(); ++i) {
-	//         std::cout << (*i).dep_time << "\t" << (*i).arr_time;
-	//         if ((*i).l_enter != nullptr)
-	//                 std::cout << "\t" << (*(*i).l_enter) << std::endl;
-	//         if ((*i).l_exit != nullptr)
-	//                 std::cout << "\t" << (*(*i).l_exit) << std::endl;
-	//         else
-	//                 std::cout << std::endl;
-	// }
-	
 	duration<double, std::milli> ms_double = t2 - t1;
-
 	for (unsigned int j = 0; j < result.size(); j++) {
-		std::cout << "Profile " << (j+1) << ":\n";
-		for (std::vector<Connection*>::iterator i = result[j].begin(); i != result[j].end(); ++i)
-		{
-			std::cout << *(*i) << std::endl;
-		}
+	        std::cout << "Profile " << (j+1) << ":\n";
+	        for (std::vector<Connection*>::iterator i = result[j].begin(); i != result[j].end(); ++i)
+	        {
+	                std::cout << *(*i) << std::endl;
+	        }
+	        std::cout << "\n\n";
 	}
 	std::cout << "Query took " << ms_double.count() << " ms!\n";
 	return 0;

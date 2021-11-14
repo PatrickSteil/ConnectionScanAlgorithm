@@ -504,7 +504,7 @@ public:
 			}
 		}
 		std::vector<std::vector<Connection*>> result = {};
-		result.reserve(profile_counter);
+		result.reserve(S[from_id].size());
 		auto S_iter = S[from_id].begin();
 
 		// scan every profile that arrives (earlier than infty)
@@ -626,7 +626,7 @@ public:
 			}
 		}
 		std::vector<std::vector<Connection*>> result = {};
-		result.reserve(profile_counter);
+		result.reserve(S[from_id].size());
 		auto S_iter = S[from_id].begin();
 
 		// scan every profile that arrives (earlier than infty)
