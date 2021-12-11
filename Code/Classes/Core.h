@@ -17,7 +17,7 @@ using namespace google;
 #define GET_ROUNDED_ARR_TIME(x) (((0xfFFFFE000) & (x)) >> 5)
 #define GET_EXACT_ARR_TIME(x) (GET_ROUNDED_ARR_TIME(x) + (0xFF & (x)))
 #define GET_NUMBER_OF_LEGS(x) (((0b1111100000000) & (x)) >> 8)
-#define INSERT_LEG_COUNTER(x) ((0xFF & (x)) + ((0xFFFFFF01 & (x)) << 5))
+#define INSERT_LEG_COUNTER(x) ((0xFF & (x)) + ((0xFFFFFF00 & (x)) << 5)  + (1<<8) )
 #define INCREASE_LEG_COUNTER(x) ( ((GET_NUMBER_OF_LEGS(x)+1) << 8) + ((x) & 0xFFFFE0F))
 
 struct profile_array {
@@ -69,7 +69,7 @@ private:
 
 		// III - where the new_profile is worse than the next 
 		if ((*(std::next(itr))).dep_time != (unsigned int) (~0) && (*(std::next(itr))).dep_time >= new_prof.dep_time && (*(std::next(itr))).arr_time <= new_prof.arr_time) {
-			(*(std::next(itr))).dep_time = new_prof.dep_time;
+			// (*(std::next(itr))).dep_time = new_prof.dep_time;
 			itr = liste.erase(itr);
 			return false;
 		}
@@ -494,23 +494,34 @@ public:
 		result.reserve(S[from_id].size());
 		auto S_iter = S[from_id].begin();
 
-		// scan every profile that arrives (earlier than infty)
 		unsigned int current_id, current_arr_time;
 		std::list<struct profile_array>::iterator current_it;
+		int max_counter = 100;
 		while (S_iter != S[from_id].end() && (*S_iter).arr_time < infty) {
 			std::vector<Connection*> conn_vector;
-			current_id = from_id;
-			current_arr_time = (*S_iter).arr_time;
-			while (current_id != to_id) {
+			current_arr_time = (*S_iter).l_exit->getArrivalTime();
+
+			conn_vector.push_back((*S_iter).l_enter);
+			if ((*S_iter).l_enter != (*S_iter).l_exit) conn_vector.push_back((*S_iter).l_exit);
+			current_id = (*S_iter).l_exit->getArrivalID();
+			int counter = 0;
+			while (current_id != to_id && counter < max_counter) {
 				current_it = S[current_id].begin();
-				while (current_it != S[current_id].end() && (*current_it).arr_time != current_arr_time && this->D[current_id] == infty) ++current_it;
+
 				if (this->D[current_id] != infty) {
-					conn_vector.push_back(new Connection(this->station_ptr_map[current_id], this->station_ptr_map[to_id], current_arr_time - this->D[current_id], current_arr_time, "Walking from " + std::to_string(current_id) + " to " + std::to_string(to_id)));
+					conn_vector.push_back(new Connection(this->station_ptr_map[current_id], this->station_ptr_map[to_id], current_arr_time, current_arr_time + this->D[current_id], "Walking from " + std::to_string(current_id) + " to " + std::to_string(to_id)));
 					break;
 				}
+
+				while (current_it != S[current_id].end() && (*current_it).l_enter->getDepartureTime() < current_arr_time && this->D[current_id] == infty) {
+					++current_it;
+				}
+				current_arr_time = (*current_it).l_exit->getArrivalTime();
 				conn_vector.push_back((*current_it).l_enter);
 				if ((*current_it).l_enter != (*current_it).l_exit) conn_vector.push_back((*current_it).l_exit);
 				current_id = (*current_it).l_exit->getArrivalID();
+			
+				counter++;
 			}
 			result.push_back(conn_vector);
 			S_iter++;
@@ -532,6 +543,9 @@ public:
 		std::vector<Transfer*> transfers = (*this->station_ptr_map[to_id]->getTransfers());
 
 		for (auto transfer = transfers.begin(); transfer != transfers.end(); ++transfer) {
+			if ((*transfer)->getArrivalID() == to_id) {
+				return {{new Connection(this->station_ptr_map[from_id], this->station_ptr_map[to_id], 0, (*transfer)->getDuration(), "Walking from " + std::to_string(from_id) + " to " + std::to_string(to_id))}};
+			}
 			this->D[(*transfer)->getArrivalID()] = (*transfer)->getDuration();
 		}
 
@@ -620,21 +634,24 @@ public:
 				}
 			}
 		}
+		// Journey Extraction
+		if (S[from_id].size() == 1) return {};
 		std::vector<std::vector<Connection*>> result = {};
 		result.reserve(S[from_id].size());
 		auto S_iter = S[from_id].begin();
 
-		// scan every profile that arrives (earlier than infty)
-		unsigned int current_id, current_arr_time;
+		unsigned int current_id, current_arr_time, new_id;
 		std::list<struct profile_array>::iterator current_it;
-		while (S_iter != S[from_id].end() && (*S_iter).arr_time < infty) {
+		int max_counter = 100;
+		while (S_iter != S[from_id].end() && GET_EXACT_ARR_TIME((*S_iter).arr_time) < 134217727) { 
 			std::vector<Connection*> conn_vector;
 			current_arr_time = (*S_iter).l_exit->getArrivalTime();
 
 			conn_vector.push_back((*S_iter).l_enter);
 			if ((*S_iter).l_enter != (*S_iter).l_exit) conn_vector.push_back((*S_iter).l_exit);
 			current_id = (*S_iter).l_exit->getArrivalID();
-			while (current_id != to_id) {
+			int counter = 0;
+			while (current_id != to_id && counter < max_counter) {
 				current_it = S[current_id].begin();
 
 				if (this->D[current_id] != infty) {
@@ -642,13 +659,23 @@ public:
 					break;
 				}
 
-				while (current_it != S[current_id].end() && (*current_it).l_exit->getArrivalTime() < current_arr_time && this->D[current_id] == infty) {
+				while (current_it != S[current_id].end() && (*current_it).l_enter->getDepartureTime() < current_arr_time && this->D[current_id] == infty) {
 					++current_it;
+					// check here
+					// current_it = S[current_id].erase(current_it);
 				}
 				current_arr_time = (*current_it).l_exit->getArrivalTime();
 				conn_vector.push_back((*current_it).l_enter);
 				if ((*current_it).l_enter != (*current_it).l_exit) conn_vector.push_back((*current_it).l_exit);
+				
+				// check here
+				// new_id = (*current_it).l_exit->getArrivalID();
+				// current_it = S[current_id].erase(current_it);
+				// current_id = new_id;
+
 				current_id = (*current_it).l_exit->getArrivalID();
+			
+				counter++;
 			}
 			result.push_back(conn_vector);
 			S_iter++;

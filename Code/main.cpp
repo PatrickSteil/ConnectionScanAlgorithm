@@ -28,7 +28,8 @@ int main(int argc, char const *argv[]) {
 
 	auto t1 = high_resolution_clock::now();
 
-	std::vector<std::vector<Connection*>> result = core.earliest_arr_profile_journey_extraction_leg_opt(dep_id, arr_id, core.getTimeAsInt(start_time), core.getTimeAsInt(latest_arr));
+	std::vector<std::vector<Connection*>> result = core.earliest_arr_profile_journey_extraction(dep_id, arr_id, core.getTimeAsInt(start_time), core.getTimeAsInt(latest_arr));
+	// std::vector<std::vector<Connection*>> result = core.earliest_arr_profile_journey_extraction_leg_opt(dep_id, arr_id, core.getTimeAsInt(start_time), core.getTimeAsInt(latest_arr));
 
 	auto t2 = high_resolution_clock::now();
 	

@@ -1,0 +1,17 @@
+agency_id,agency_name,agency_url,agency_timezone,agency_lang
+1,Heilbronner Nahverkehr,http://www.bahn.de,Europe/Berlin,de
+10,Verkehrsverbund Stuttgart,http://www.bahn.de,Europe/Berlin,de
+11,KVG,http://www.bahn.de,Europe/Berlin,de
+12,SWEG RVF-Gebiet,http://www.bahn.de,Europe/Berlin,de
+13,Tarifverbund Ortenau GmbH,http://www.bahn.de,Europe/Berlin,de
+14,Karlsruher Verkehrsverbund,http://www.bahn.de,Europe/Berlin,de
+15,Harzer Schmalspurbahnen,http://www.bahn.de,Europe/Berlin,de
+16,Münchner Verkehrs- und Tarifverbund,http://www.bahn.de,Europe/Berlin,de
+2,Regensburger Verkehrsverbund,http://www.bahn.de,Europe/Berlin,de
+3,Landkreis Landsberg (Lech),http://www.bahn.de,Europe/Berlin,de
+4,Niederländische Bahnen,http://www.bahn.de,Europe/Berlin,de
+5,Gesamtnetz der deutschen Bahn,http://www.bahn.de,Europe/Berlin,de
+6,Touristische Bahnen (diverse),http://www.bahn.de,Europe/Berlin,de
+7,S Bahn Berlin GmbH,http://www.bahn.de,Europe/Berlin,de
+8,Dessauer Verkehrsgesellschaft,http://www.bahn.de,Europe/Berlin,de
+9,Gesellschaft zur Förderung des ÖPNV Regensburg,http://www.bahn.de,Europe/Berlin,de
