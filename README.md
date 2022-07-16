@@ -8,14 +8,6 @@ Programming internship with Mr Prof Schulz
 - GTFS (https://opendata.rnv-online.de/dataset/gtfs-general-transit-feed-specification)
 - CSA Algorithm (https://i11www.iti.kit.edu/extra/publications/dpsw-isftr-13.pdf)
 
-
-## TO DO
-
-- Profile Journey Extraction
-- Profile Journey & Leg optimization
-- Sun Idea
-- Correct Connections with calendar
-
 # Error in Sources
 
 Im csa\_overview [https://arxiv.org/pdf/1703.05997v1.pdf] steht auf Seite 20 "Further, τc[3] is 10 because the journey s@6 -> x -> y -> t@11 with 3 legs exists". It should update τc[3] to 11, the error is repeated on the bottom of the page "The resulting profile has the value {(6, (∞, 12, 10 [11])), (7, (∞, 12, 12)), (∞, (∞, ∞, ∞))}"
